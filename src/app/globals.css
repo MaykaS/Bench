@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-instrument-sans), sans-serif;
+
+  --color-page: #f7f8f8;
+  --color-surface: #ffffff;
+  --color-ink: #14171a;
+  --color-secondary: #5b6570;
+  --color-hairline: #e3e6e8;
+  --color-accent: #0f6e56;
+  --color-flag-bg: #faeeda;
+  --color-flag-text: #854f0b;
+
+  --radius-card: 12px;
+
+  --spacing-card: 14px;
+  --spacing-tap: 44px;
+}
+
+body {
+  background: var(--color-page);
+  color: var(--color-ink);
+}

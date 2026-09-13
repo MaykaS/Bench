@@ -1,0 +1,15 @@
+import type { ReactNode } from "react";
+import { BottomBar } from "./BottomBar";
+import { Sidebar } from "./Sidebar";
+
+export function NavShell({ children }: { children: ReactNode }) {
+  return (
+    <div className="min-h-dvh md:flex">
+      <Sidebar />
+      <main className="mx-auto w-full max-w-3xl flex-1 p-card pb-[calc(var(--spacing-tap)+env(safe-area-inset-bottom)+var(--spacing-card))] md:p-8">
+        {children}
+      </main>
+      <BottomBar />
+    </div>
+  );
+}
