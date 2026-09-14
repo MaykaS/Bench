@@ -4,11 +4,11 @@ import { useRef, useState } from "react";
 import type { ImportPreview } from "@/services/ImportTypes";
 
 function ImportIcon() {
-  return <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12m-5-5 5 5 5-5" /><path d="M5 20h14" /></svg>;
+  return <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15V3m-5 5 5-5 5 5" /><path d="M5 20h14" /></svg>;
 }
 
 function ExportIcon() {
-  return <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15V3m5 5-5-5-5 5" /><path d="M5 13v6h14v-6" /></svg>;
+  return <svg aria-hidden="true" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12m-5-5 5 5 5-5" /><path d="M5 13v6h14v-6" /></svg>;
 }
 
 export function DataTransferPanel<T>({ label, accept, records, jsonFormat, jsonName, parseFile, replaceAll, onImported }: { label: string; accept: string; records: T[] | null; jsonFormat: string; jsonName: string; parseFile: (file: File) => Promise<ImportPreview<T>>; replaceAll: (records: T[]) => Promise<void>; onImported: () => void; }) {
@@ -42,8 +42,8 @@ export function DataTransferPanel<T>({ label, accept, records, jsonFormat, jsonN
 
   return <section className="rounded-card border border-hairline bg-surface p-card" aria-label={`${label} data transfer`}>
     <div className="flex flex-wrap items-center gap-2">
-      <button type="button" onClick={() => input.current?.click()} className="min-h-tap inline-flex items-center gap-2 rounded-card border border-hairline px-3 text-sm font-medium text-accent"><ImportIcon /> Import</button>
-      <button type="button" onClick={exportJson} disabled={!records} className="min-h-tap inline-flex items-center gap-2 rounded-card border border-hairline px-3 text-sm text-secondary disabled:opacity-50"><ExportIcon /> Export JSON</button>
+      <button type="button" onClick={() => input.current?.click()} aria-label={`Import ${label}`} title={`Import ${label}`} className="min-h-tap inline-flex w-12 items-center justify-center rounded-card border border-hairline text-accent"><ImportIcon /></button>
+      <button type="button" onClick={exportJson} disabled={!records} aria-label={`Export ${label} JSON`} title={`Export ${label} JSON`} className="min-h-tap inline-flex w-12 items-center justify-center rounded-card border border-hairline text-secondary disabled:opacity-50"><ExportIcon /></button>
       <input ref={input} type="file" accept={accept} className="hidden" onChange={event => { void selectFile(event.target.files?.[0]); event.target.value = ""; }} />
     </div>
     <p className="mt-2 text-xs leading-relaxed text-secondary">Move this data to another device with Export JSON, then Import JSON there.</p>

@@ -80,8 +80,8 @@ export default function CasingConsultingPage() {
         <Link href="/prep/casing/consulting/new" className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-card bg-accent text-base font-medium text-surface"><span aria-hidden="true" className="text-xl">+</span> Log a case</Link>
         <button type="button" onClick={handleExport} disabled={exporting || !sessions}
           aria-label={exporting ? "Exporting cases" : "Export cases to Excel"} title="Export cases to Excel"
-          className="flex min-h-12 w-12 shrink-0 items-center justify-center gap-2 rounded-card border border-hairline bg-surface px-3 text-accent disabled:opacity-50 md:w-auto">
-          <svg aria-hidden="true" className={"h-5 w-5 " + (exporting ? "animate-pulse" : "")} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 15V3m5 5-5-5-5 5M5 13v6h14v-6" /></svg><span className="hidden text-sm font-medium md:inline">{exporting ? "Exporting…" : "Export Excel"}</span>
+          className="flex min-h-12 w-12 shrink-0 items-center justify-center rounded-card border border-hairline bg-surface text-accent disabled:opacity-50">
+          <svg aria-hidden="true" className={"h-5 w-5 " + (exporting ? "animate-pulse" : "")} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12m-5-5 5 5 5-5M5 13v6h14v-6" /></svg>
         </button>
       </div>
       <div className="-mx-card my-1 border-t border-hairline md:mx-0" />
