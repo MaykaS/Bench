@@ -1,4 +1,4 @@
-export const APPLICATION_STATUSES = ["applied", "outreach", "interview", "offer", "rejected", "withdrawn"] as const;
+export const APPLICATION_STATUSES = ["applied", "outreach", "interview", "final_round", "offer", "rejected", "withdrawn"] as const;
 export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
 
 export interface ApplicationTimelineEvent {
