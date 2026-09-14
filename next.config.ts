@@ -8,6 +8,12 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname),
   },
+  // The export route reads docs/source/Case_Tracker_Copy.xlsx from disk at
+  // request time; it's not imported, so file tracing wouldn't bundle it for
+  // the deployed serverless function without this.
+  outputFileTracingIncludes: {
+    "/api/casing/export": ["./docs/source/Case_Tracker_Copy.xlsx"],
+  },
 };
 
 export default nextConfig;

@@ -1,16 +1,105 @@
-import { Placeholder } from "@/components/Placeholder";
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import type { CaseSession } from "@/domain/CaseSession";
+import { ConsultingRubric } from "@/domain/rubrics/ConsultingRubric";
+import { CaseSessionCard } from "@/components/casing/CaseSessionCard";
+import { CaseSessionTable } from "@/components/casing/CaseSessionTable";
 import { SubTabs } from "@/components/nav/SubTabs";
 import { casingTabs, prepTabs } from "@/components/nav/destinations";
+import { useSession } from "@/lib/session/SessionContext";
+import { getCaseSessionRepository } from "@/repositories/factory";
+import { CaseStatsService } from "@/services/CaseStatsService";
+
+const rubric = new ConsultingRubric();
+const statsService = new CaseStatsService();
 
 export default function CasingConsultingPage() {
+  const { userId } = useSession();
+  const [sessions, setSessions] = useState<CaseSession[] | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [exporting, setExporting] = useState(false);
+
+  useEffect(() => {
+    getCaseSessionRepository()
+      .list(userId)
+      .then(rows => setSessions(rows.filter(row => row.track === "consulting")))
+      .catch(error => { console.error("Case list failed:", error); setLoadError(true); });
+  }, [userId, attempt]);
+
+  async function handleExport() {
+    setExportError(null);
+    setExporting(true);
+    try {
+      const response = await fetch("/api/casing/export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessions: sessions ?? [] }),
+      });
+      if (!response.ok) {
+        throw new Error("Export failed");
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "Case Tracker.xlsx";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      setExportError("Could not export. Try again.");
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  const summary = sessions ? statsService.summarize(sessions, rubric) : null;
+
   return (
-    <>
-      <SubTabs items={prepTabs} />
-      <SubTabs items={casingTabs} />
-      <Placeholder
-        name="Casing — consulting"
-        description="Structure, math, coaching, business acumen, conclusion, creativity — scored per session."
-      />
-    </>
+    <div className="flex flex-col gap-3 pb-24">
+      <div className="hidden md:block"><SubTabs items={prepTabs} /></div>
+      <h1 className="text-2xl font-semibold tracking-tight text-ink">Casing</h1>
+      <nav aria-label="Casing track" className="flex rounded-card bg-hairline/40 p-1">
+        {casingTabs.map(tab => <Link key={tab.href} href={tab.href} aria-current={tab.href.endsWith("consulting") ? "page" : undefined}
+          className={"flex min-h-tap flex-1 items-center justify-center rounded-[9px] text-sm font-medium " + (tab.href.endsWith("consulting") ? "bg-surface text-accent shadow-sm" : "text-secondary")}>{tab.label}</Link>)}
+      </nav>
+      <div className="grid grid-cols-3 gap-2.5" aria-label="Case statistics">
+        <div className="rounded-card bg-surface p-3"><p className="text-sm text-secondary">Sessions</p><p className="mt-0.5 text-2xl font-semibold tabular-nums">{summary?.sessionCount ?? "—"}</p></div>
+        <div className="rounded-card bg-surface p-3"><p className="text-sm text-secondary">Average</p><p className="mt-0.5 text-2xl font-semibold tabular-nums">{summary?.averageOverall?.toFixed(1) ?? "—"}</p></div>
+        <div className="rounded-card bg-flag-bg p-3 text-flag-text"><p className="text-sm">Weakest</p><p className="mt-1 break-words text-lg font-semibold leading-tight">{summary?.weakestDimension?.label ?? "—"}</p></div>
+      </div>
+      <div className="flex gap-2.5 py-1">
+        <Link href="/prep/casing/consulting/new" className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-card bg-accent text-base font-medium text-surface"><span aria-hidden="true" className="text-xl">+</span> Log a case</Link>
+        <button type="button" onClick={handleExport} disabled={exporting || !sessions}
+          aria-label={exporting ? "Exporting cases" : "Export cases to Excel"} title="Export cases to Excel"
+          className="flex min-h-12 w-12 shrink-0 items-center justify-center rounded-card border border-hairline bg-surface text-accent disabled:opacity-50">
+          <svg aria-hidden="true" className={"h-5 w-5 " + (exporting ? "animate-pulse" : "")} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12m-4-4 4 4 4-4M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" /></svg>
+        </button>
+      </div>
+      <div className="-mx-card my-1 border-t border-hairline md:mx-0" />
+      {exportError && <p className="text-sm text-flag-text">{exportError}</p>}
+
+      {loadError ? (
+        <div role="alert"><p>Could not load your cases.</p><button className="min-h-tap text-accent" onClick={() => { setLoadError(false); setAttempt(n => n + 1); }}>Try again</button></div>
+      ) : sessions === null ? (
+        <p className="text-secondary">Loading&hellip;</p>
+      ) : sessions.length === 0 ? (
+        <p className="text-secondary">No sessions yet. Log your first case.</p>
+      ) : (
+        <>
+          <div className="flex flex-col gap-3 md:hidden">
+            {sessions.map((session) => (
+              <CaseSessionCard key={session.id} session={session} />
+            ))}
+          </div>
+          <CaseSessionTable sessions={sessions} />
+        </>
+      )}
+    </div>
   );
 }

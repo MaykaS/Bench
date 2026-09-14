@@ -3,12 +3,12 @@
 @theme {
   --font-sans: var(--font-instrument-sans), sans-serif;
 
-  --color-page: #f7f8f8;
+  --color-page: #F7F5EF;
   --color-surface: #ffffff;
-  --color-ink: #14171a;
-  --color-secondary: #5b6570;
-  --color-hairline: #e3e6e8;
-  --color-accent: #0f6e56;
+  --color-ink: #202923;
+  --color-secondary: #626B63;
+  --color-hairline: #E4E5DD;
+  --color-accent: #24634B;
   --color-flag-bg: #faeeda;
   --color-flag-text: #854f0b;
 
@@ -22,3 +22,5 @@ body {
   background: var(--color-page);
   color: var(--color-ink);
 }
+
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
