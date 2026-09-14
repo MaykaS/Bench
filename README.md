@@ -7,9 +7,11 @@ A personal, mobile-first recruiting tracker built with Next.js, TypeScript, Tail
 - Log and edit consulting cases, scores, and notes.
 - Review sessions as mobile cards or a desktop table, with performance summaries.
 - Export cases to the original Excel tracker format.
+- Track applications with pipeline sorting, next-action reminders, contacts, resume versions, and process timelines.
+- Add reusable Network contacts for application referrals and relationships.
 - Add Bench to your home screen with its bench-and-sprout icon.
 
-Data stays in your browser's localStorage. Authentication is stubbed; cross-device sync and Supabase are planned. Other recruiting sections currently show placeholders.
+Data stays in your browser's localStorage. Authentication is stubbed; cross-device sync and Supabase are planned. Coffee chats and some prep sections currently show placeholders.
 
 Use the Import and Export JSON controls on the Cases and PEI screens to move data between browsers or devices. Imports show a validation preview and replace only the selected dataset after confirmation. Automatic cross-device sync will come with Supabase.
 

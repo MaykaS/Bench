@@ -1,0 +1,3 @@
+"use client";
+import { useEffect,useState } from "react";import { useParams } from "next/navigation";import { getApplicationRepository } from "@/repositories/factory";import { useSession } from "@/lib/session/SessionContext";import type { Application } from "@/domain/Application";import { ApplicationForm } from "@/components/applications/ApplicationForm";
+export default function EditApplicationPage(){const {id}=useParams<{id:string}>();const {userId}=useSession();const [app,setApp]=useState<Application|null>(null);useEffect(()=>{getApplicationRepository().get(id,userId).then(setApp);},[id,userId]);return app?<ApplicationForm initial={app}/>:<p className="text-secondary">Loading application…</p>;}
