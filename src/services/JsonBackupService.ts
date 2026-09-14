@@ -22,6 +22,12 @@ export class JsonBackupService {
         const optional = format === "bench-applications" ? ["location", "link", "notes", "resumeVersion", "nextActionNote"] : ["company", "role", "email", "profileUrl", "notes"];
         if (optional.some(key => row[key] !== null && !string(row[key]))) fail("Optional text fields must contain text or null.");
         if (format === "bench-applications") {
+          if (row.completedSteps === undefined) row.completedSteps = [];
+          const stepIds = new Set<string>();
+          if (!Array.isArray(row.completedSteps) || !row.completedSteps.every(step => {
+            if (!object(step) || !string(step.id) || !step.id || stepIds.has(step.id as string) || !string(step.description) || !step.description.trim() || !date(step.dueOn) || !date(step.completedOn) || (step.notes !== null && !string(step.notes))) return false;
+            stepIds.add(step.id as string); return true;
+          })) fail("Invalid completed-step history.");
           if (!string(row.company) || !row.company.trim() || !string(row.role) || !row.role.trim() || !date(row.appliedOn)) fail("Company, role and a valid application date are required.");
           if (typeof row.referred !== "boolean" || !Array.isArray(row.contactIds) || !row.contactIds.every(string)) fail("Invalid referral or contact selection.");
           if (!APPLICATION_STATUSES.includes(row.status as never) || (row.nextActionOn !== null && !date(row.nextActionOn))) fail("Invalid status or next-action date.");

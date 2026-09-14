@@ -2,6 +2,7 @@ import type { Application, ApplicationData, ApplicationTimelineEvent, Applicatio
 
 export type NewApplicationInput = Omit<ApplicationData, "id" | "userId" | "createdAt" | "updatedAt" | "status" | "timeline"> & { status?: ApplicationStatus; timeline?: ApplicationTimelineEvent[] };
 export interface ApplicationRepository {
+  completeNextStep(id: string, userId: string, input: { expectedOn: string; expectedNote: string | null; completedOn: string; notes: string | null; nextOn: string | null; nextNote: string | null }): Promise<Application>;
   replaceAll(userId: string, records: ApplicationData[]): Promise<void>;
   list(userId: string): Promise<Application[]>;
   get(id: string, userId: string): Promise<Application | null>;

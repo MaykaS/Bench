@@ -1,0 +1,48 @@
+"use client";
+import { useState, type FormEvent } from "react";
+import type { Application } from "@/domain/Application";
+
+export function NextStepPanel({ app, today, complete, schedule }: {
+  app: Application; today: string;
+  complete: (input: { expectedOn: string; expectedNote: string | null; completedOn: string; notes: string | null; nextOn: string | null; nextNote: string | null }) => Promise<void>;
+  schedule: (date: string, description: string) => Promise<void>;
+}) {
+  const [mode, setMode] = useState<"done" | "schedule" | null>(null);
+  const [date, setDate] = useState(today);
+  const [notes, setNotes] = useState("");
+  const [nextOn, setNextOn] = useState("");
+  const [nextNote, setNextNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const state = app.nextStepState(today);
+  const field = "min-h-tap w-full min-w-0 rounded-card border border-hairline bg-surface p-3 text-base";
+  function open(value: "done" | "schedule") {
+    setMode(value); setError(""); setDate(today); setNotes("");
+    setNextOn(value === "schedule" ? app.nextActionOn ?? "" : "");
+    setNextNote(value === "schedule" ? app.nextActionNote ?? "" : "");
+  }
+  async function save(event: FormEvent) {
+    event.preventDefault(); if (busy) return;
+    if (!!nextOn !== !!nextNote.trim()) { setError("Provide both a next-step description and date."); return; }
+    setBusy(true); setError("");
+    try {
+      if (mode === "done" && app.nextActionOn) await complete({ expectedOn: app.nextActionOn, expectedNote: app.nextActionNote, completedOn: date, notes: notes.trim() || null, nextOn: nextOn || null, nextNote: nextNote.trim() || null });
+      else await schedule(nextOn, nextNote.trim());
+      setMode(null);
+    } catch { setError("Could not save. Your changes are still here—please try again."); }
+    finally { setBusy(false); }
+  }
+  return <>
+    <section className={`rounded-card border p-card ${state === "due" || state === "overdue" ? "border-flag-text bg-flag-bg" : "border-hairline bg-surface"}`}>
+      <h2 className="font-semibold">Next step</h2>
+      {state !== "none" ? <><p className="mt-2 font-medium">{app.nextActionNote || "Next action"}</p><p className="mt-1 text-sm">{state === "pending" ? "Pending" : state === "due" ? "Due today — Has this happened?" : "Overdue — Has this happened?"} · {app.nextActionOn}</p></> : <p className="mt-2 text-sm text-secondary">No next step scheduled.</p>}
+      {!mode && <div className="mt-3 flex flex-wrap gap-2">{app.nextActionOn && <button onClick={() => open("done")} className="min-h-tap rounded-card bg-accent px-3 text-surface">Mark done</button>}<button onClick={() => open("schedule")} className="min-h-tap rounded-card border border-hairline bg-surface px-3 text-accent">{app.nextActionOn ? "Reschedule" : "Schedule next step"}</button></div>}
+      {mode && <form onSubmit={save} className="mt-4 grid gap-3">
+        {mode === "done" && <><label>Completion date<input required type="date" max={today} value={date} onChange={e => setDate(e.target.value)} className={field} /></label><label>How did it go? <span className="text-sm text-secondary">(optional)</span><textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} className={field} /></label></>}
+        <div className="grid gap-3 sm:grid-cols-2"><label>{mode === "done" ? "Next step (optional)" : "Next step"}<input required={mode === "schedule" || !!nextOn} value={nextNote} onChange={e => setNextNote(e.target.value)} className={field} /></label><label>Next step date<input required={mode === "schedule" || !!nextNote.trim()} type="date" value={nextOn} onChange={e => setNextOn(e.target.value)} className={field} /></label></div>
+        {error && <p role="alert" className="text-sm text-flag-text">{error}</p>}<div className="flex gap-2"><button disabled={busy} className="min-h-tap rounded-card bg-accent px-4 text-surface disabled:opacity-50">{busy ? "Saving…" : "Save"}</button><button type="button" disabled={busy} onClick={() => setMode(null)} className="min-h-tap px-4 text-secondary">Cancel</button></div>
+      </form>}
+    </section>
+    {!!app.completedSteps.length && <section className="rounded-card border border-hairline bg-surface p-card"><h2 className="font-semibold">Completed steps</h2><ol className="mt-3 space-y-4">{[...app.completedSteps].sort((a,b) => b.completedOn.localeCompare(a.completedOn)).map(step => <li key={step.id} className="border-t border-hairline pt-3"><p className="font-medium">{step.description}</p><p className="mt-1 text-xs text-secondary">Done {step.completedOn} · Originally due {step.dueOn}</p>{step.notes && <p className="mt-2 whitespace-pre-wrap break-words text-sm">{step.notes}</p>}</li>)}</ol></section>}
+  </>;
+}
