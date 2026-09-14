@@ -40,15 +40,14 @@ export function DataTransferPanel<T>({ label, accept, records, jsonFormat, jsonN
     const url = URL.createObjectURL(blob); const anchor = document.createElement("a"); anchor.href = url; anchor.download = jsonName; anchor.click(); URL.revokeObjectURL(url);
   }
 
-  return <section className="rounded-card border border-hairline bg-surface p-card" aria-label={`${label} data transfer`}>
+  return <div aria-label={`${label} data transfer`}>
     <div className="flex flex-wrap items-center gap-2">
       <button type="button" onClick={() => input.current?.click()} aria-label={`Import ${label}`} title={`Import ${label}`} className="min-h-tap inline-flex w-12 items-center justify-center rounded-card border border-hairline text-accent"><ImportIcon /></button>
       <button type="button" onClick={exportJson} disabled={!records} aria-label={`Export ${label} JSON`} title={`Export ${label} JSON`} className="min-h-tap inline-flex w-12 items-center justify-center rounded-card border border-hairline text-secondary disabled:opacity-50"><ExportIcon /></button>
       <input ref={input} type="file" accept={accept} className="hidden" onChange={event => { void selectFile(event.target.files?.[0]); event.target.value = ""; }} />
     </div>
-    <p className="mt-2 text-xs leading-relaxed text-secondary">Move this data to another device with Export JSON, then Import JSON there.</p>
     {busy && <p className="mt-3 text-sm text-secondary">Reading {filename || "file"}…</p>}
     {message && <p role="status" className="mt-3 text-sm text-secondary">{message}</p>}
-    {preview && <div className="mt-3 border-t border-hairline pt-3"><p className="text-sm text-ink"><span className="font-medium">{filename}</span> · {preview.records.length} records · replaces current {label.toLowerCase()}</p>{preview.errors.length > 0 && <ul className="mt-2 space-y-1 text-sm text-flag-text">{preview.errors.map((issue, i) => <li key={i}>{issue.record ? `${issue.record}: ` : ""}{issue.message}</li>)}</ul>}{preview.warnings.length > 0 && <ul className="mt-2 space-y-1 text-sm text-secondary">{preview.warnings.map((issue, i) => <li key={i}>Note: {issue.message}</li>)}</ul>}<div className="mt-3 flex flex-wrap gap-2"><button type="button" disabled={preview.errors.length > 0 || busy} onClick={() => void importRecords()} className="min-h-tap rounded-card bg-accent px-3 text-sm font-medium text-surface disabled:opacity-50">Replace current {label.toLowerCase()}</button><button type="button" onClick={() => setPreview(null)} className="min-h-tap px-3 text-sm text-secondary">Cancel</button></div></div>}
-  </section>;
+    {preview && <div className="absolute left-0 right-0 top-full z-20 mt-2 rounded-card border border-hairline bg-surface p-card shadow-lg"><p className="text-sm text-ink"><span className="font-medium">{filename}</span> · {preview.records.length} records · replaces current {label.toLowerCase()}</p>{preview.errors.length > 0 && <ul className="mt-2 space-y-1 text-sm text-flag-text">{preview.errors.map((issue, i) => <li key={i}>{issue.record ? `${issue.record}: ` : ""}{issue.message}</li>)}</ul>}{preview.warnings.length > 0 && <ul className="mt-2 space-y-1 text-sm text-secondary">{preview.warnings.map((issue, i) => <li key={i}>Note: {issue.message}</li>)}</ul>}<div className="mt-3 flex flex-wrap gap-2"><button type="button" disabled={preview.errors.length > 0 || busy} onClick={() => void importRecords()} className="min-h-tap rounded-card bg-accent px-3 text-sm font-medium text-surface disabled:opacity-50">Replace current {label.toLowerCase()}</button><button type="button" onClick={() => setPreview(null)} className="min-h-tap px-3 text-sm text-secondary">Cancel</button></div></div>}
+  </div>;
 }

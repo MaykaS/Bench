@@ -76,17 +76,16 @@ export default function CasingConsultingPage() {
         <div className="rounded-card bg-surface p-3"><p className="text-sm text-secondary">Average</p><p className="mt-0.5 text-2xl font-semibold tabular-nums">{summary?.averageOverall?.toFixed(1) ?? "—"}</p></div>
         <div className="rounded-card bg-flag-bg p-3 text-flag-text"><p className="text-sm">Weakest</p><p className="mt-1 break-words text-lg font-semibold leading-tight">{summary?.weakestDimension?.label ?? "—"}</p></div>
       </div>
-      <div className="flex gap-2.5 py-1">
+      <div className="relative flex gap-2.5 py-1">
         <Link href="/prep/casing/consulting/new" className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-card bg-accent text-base font-medium text-surface"><span aria-hidden="true" className="text-xl">+</span> Log a case</Link>
         <button type="button" onClick={handleExport} disabled={exporting || !sessions}
           aria-label={exporting ? "Exporting cases" : "Export cases to Excel"} title="Export cases to Excel"
           className="flex min-h-12 w-12 shrink-0 items-center justify-center rounded-card border border-hairline bg-surface text-accent disabled:opacity-50">
           <svg aria-hidden="true" className={"h-5 w-5 " + (exporting ? "animate-pulse" : "")} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12m-5-5 5 5 5-5M5 13v6h14v-6" /></svg>
         </button>
+        <DataTransferPanel label="cases" accept=".xlsx,.json" records={sessions} jsonFormat="bench-cases" jsonName="bench-cases.json" parseFile={(file) => importService.parseFile(file)} replaceAll={(records) => getCaseSessionRepository().replaceAll(userId, records)} onImported={() => { setSessions(null); setAttempt(n => n + 1); }} />
       </div>
-      <div className="-mx-card my-1 border-t border-hairline md:mx-0" />
       {exportError && <p className="text-sm text-flag-text">{exportError}</p>}
-      <DataTransferPanel label="cases" accept=".xlsx,.json" records={sessions} jsonFormat="bench-cases" jsonName="bench-cases.json" parseFile={(file) => importService.parseFile(file)} replaceAll={(records) => getCaseSessionRepository().replaceAll(userId, records)} onImported={() => { setSessions(null); setAttempt(n => n + 1); }} />
 
       {loadError ? (
         <div role="alert"><p>Could not load your cases.</p><button className="min-h-tap text-accent" onClick={() => { setLoadError(false); setAttempt(n => n + 1); }}>Try again</button></div>
