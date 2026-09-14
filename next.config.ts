@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
   // the deployed serverless function without this.
   outputFileTracingIncludes: {
     "/api/casing/export": ["./docs/source/Case_Tracker_Copy.xlsx"],
+    "/api/pei/export": ["./docs/source/PEI_stories_template.docx"],
   },
 };
 

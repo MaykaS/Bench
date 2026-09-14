@@ -1,4 +1,4 @@
-import type { PeiSection, PeiStory } from "@/domain/PeiStory";
+import type { PeiStory } from "@/domain/PeiStory";
 export interface StoryTextSegment { text: string; isGap: boolean; }
 const marker = /\[confirm(?:\s*:[^\]]*)?\]/gi;
 export class GapDetectionService {
