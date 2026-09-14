@@ -16,4 +16,8 @@ export class LocalPeiStoryRepository implements PeiStoryRepository {
     const rows = readAll(); const index = rows.findIndex(r => r.id === id && r.userId === userId); if (index < 0) throw new Error("PEI story not found.");
     rows[index] = { ...rows[index], ...input }; if (typeof window !== "undefined") window.localStorage.setItem(KEY, JSON.stringify(rows)); return new PeiStory(rows[index]);
   }
+  async replaceAll(userId: string, records: PeiStoryData[]): Promise<void> {
+    const existing = readAll().filter(row => row.userId !== userId);
+    if (typeof window !== "undefined") window.localStorage.setItem(KEY, JSON.stringify([...existing, ...records.map(row => ({ ...row, userId }))]));
+  }
 }

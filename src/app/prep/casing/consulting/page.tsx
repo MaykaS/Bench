@@ -11,9 +11,12 @@ import { casingTabs, prepTabs } from "@/components/nav/destinations";
 import { useSession } from "@/lib/session/SessionContext";
 import { getCaseSessionRepository } from "@/repositories/factory";
 import { CaseStatsService } from "@/services/CaseStatsService";
+import { CaseImportService } from "@/services/CaseImportService";
+import { DataTransferPanel } from "@/components/DataTransferPanel";
 
 const rubric = new ConsultingRubric();
 const statsService = new CaseStatsService();
+const importService = new CaseImportService();
 
 export default function CasingConsultingPage() {
   const { userId } = useSession();
@@ -83,6 +86,7 @@ export default function CasingConsultingPage() {
       </div>
       <div className="-mx-card my-1 border-t border-hairline md:mx-0" />
       {exportError && <p className="text-sm text-flag-text">{exportError}</p>}
+      <DataTransferPanel label="cases" accept=".xlsx,.json" records={sessions} jsonFormat="bench-cases" jsonName="bench-cases.json" parseFile={(file) => importService.parseFile(file)} replaceAll={(records) => getCaseSessionRepository().replaceAll(userId, records)} onImported={() => { setSessions(null); setAttempt(n => n + 1); }} />
 
       {loadError ? (
         <div role="alert"><p>Could not load your cases.</p><button className="min-h-tap text-accent" onClick={() => { setLoadError(false); setAttempt(n => n + 1); }}>Try again</button></div>

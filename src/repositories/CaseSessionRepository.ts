@@ -1,4 +1,4 @@
-import type { CaseRole, CaseScores, CaseSession, CaseTrack } from "@/domain/CaseSession";
+import type { CaseRole, CaseScores, CaseSession, CaseTrack, CaseSessionData } from "@/domain/CaseSession";
 
 export interface NewCaseSessionInput {
   caseName: string;
@@ -28,4 +28,5 @@ export interface CaseSessionRepository {
     input: Partial<NewCaseSessionInput>,
   ): Promise<CaseSession>;
   delete(id: string, userId: string): Promise<void>;
+  replaceAll(userId: string, records: CaseSessionData[]): Promise<void>;
 }

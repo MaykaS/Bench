@@ -101,4 +101,9 @@ export class LocalCaseSessionRepository implements CaseSessionRepository {
   async delete(id: string, userId: string): Promise<void> {
     writeAll(readAll().filter((r) => !(r.id === id && r.userId === userId)));
   }
+
+  async replaceAll(userId: string, records: CaseSessionData[]): Promise<void> {
+    const existing = readAll().filter((row) => row.userId !== userId);
+    writeAll([...existing, ...records.map((row) => ({ ...row, userId }))]);
+  }
 }
