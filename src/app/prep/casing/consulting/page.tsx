@@ -83,7 +83,7 @@ export default function CasingConsultingPage() {
           className="flex min-h-12 w-12 shrink-0 items-center justify-center rounded-card border border-hairline bg-surface text-accent disabled:opacity-50">
           <svg aria-hidden="true" className={"h-5 w-5 " + (exporting ? "animate-pulse" : "")} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12m-5-5 5 5 5-5M5 13v6h14v-6" /></svg>
         </button>
-        <DataTransferPanel label="cases" accept=".xlsx,.json" records={sessions} jsonFormat="bench-cases" jsonName="bench-cases.json" parseFile={(file) => importService.parseFile(file)} replaceAll={(records) => getCaseSessionRepository().replaceAll(userId, records)} onImported={() => { setSessions(null); setAttempt(n => n + 1); }} />
+        <DataTransferPanel label="cases" accept=".xlsx,.json" parseFile={(file) => importService.parseFile(file)} replaceAll={(records) => getCaseSessionRepository().replaceAll(userId, records)} onImported={() => { setSessions(null); setAttempt(n => n + 1); }} />
       </div>
       {exportError && <p className="text-sm text-flag-text">{exportError}</p>}
 
