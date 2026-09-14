@@ -4,6 +4,7 @@ const KEY = "bench:applications";
 function read(): ApplicationData[] { if (typeof window === "undefined") return []; const raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : []; }
 function write(rows: ApplicationData[]) { if (typeof window !== "undefined") localStorage.setItem(KEY, JSON.stringify(rows)); }
 export class LocalApplicationRepository implements ApplicationRepository {
+  async replaceAll(userId: string, records: ApplicationData[]) { write([...read().filter(r => r.userId !== userId), ...records.map(r => ({...r, userId}))]); }
   async list(userId: string) { return read().filter(r => r.userId === userId).sort((a,b) => b.updatedAt.localeCompare(a.updatedAt)).map(r => new Application(r)); }
   async get(id: string, userId: string) { const row = read().find(r => r.id === id && r.userId === userId); return row ? new Application(row) : null; }
   async create(userId: string, input: NewApplicationInput) { const now = new Date().toISOString(); const applied: ApplicationData = { ...input, id: crypto.randomUUID(), userId, status: input.status ?? "applied", timeline: input.timeline ?? [{ id: crypto.randomUUID(), label: input.status ?? "applied", date: input.appliedOn, note: null, createdAt: now }], createdAt: now, updatedAt: now }; write([...read(), applied]); return new Application(applied); }

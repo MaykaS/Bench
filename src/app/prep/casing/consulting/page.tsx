@@ -21,10 +21,8 @@ const importService = new CaseImportService();
 export default function CasingConsultingPage() {
   const { userId } = useSession();
   const [sessions, setSessions] = useState<CaseSession[] | null>(null);
-  const [exportError, setExportError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     getCaseSessionRepository()
@@ -32,34 +30,6 @@ export default function CasingConsultingPage() {
       .then(rows => setSessions(rows.filter(row => row.track === "consulting")))
       .catch(error => { console.error("Case list failed:", error); setLoadError(true); });
   }, [userId, attempt]);
-
-  async function handleExport() {
-    setExportError(null);
-    setExporting(true);
-    try {
-      const response = await fetch("/api/casing/export", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessions: sessions ?? [] }),
-      });
-      if (!response.ok) {
-        throw new Error("Export failed");
-      }
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "Case Tracker.xlsx";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-    } catch {
-      setExportError("Could not export. Try again.");
-    } finally {
-      setExporting(false);
-    }
-  }
 
   const summary = sessions ? statsService.summarize(sessions, rubric) : null;
 
@@ -78,14 +48,8 @@ export default function CasingConsultingPage() {
       </div>
       <div className="relative flex gap-2.5 py-1">
         <Link href="/prep/casing/consulting/new" className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-card bg-accent text-base font-medium text-surface"><span aria-hidden="true" className="text-xl">+</span> Log a case</Link>
-        <button type="button" onClick={handleExport} disabled={exporting || !sessions}
-          aria-label={exporting ? "Exporting cases" : "Export cases to Excel"} title="Export cases to Excel"
-          className="flex min-h-12 w-12 shrink-0 items-center justify-center rounded-card border border-hairline bg-surface text-accent disabled:opacity-50">
-          <svg aria-hidden="true" className={"h-5 w-5 " + (exporting ? "animate-pulse" : "")} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12m-5-5 5 5 5-5M5 13v6h14v-6" /></svg>
-        </button>
-        <DataTransferPanel label="cases" accept=".xlsx,.json" parseFile={(file) => importService.parseFile(file)} replaceAll={(records) => getCaseSessionRepository().replaceAll(userId, records)} onImported={() => { setSessions(null); setAttempt(n => n + 1); }} />
+        <DataTransferPanel label="cases" format="bench-cases" exportRecords={() => getCaseSessionRepository().list(userId)} accept=".xlsx,.json" parseFile={(file) => importService.parseFile(file)} replaceAll={(records) => getCaseSessionRepository().replaceAll(userId, records)} onImported={() => { setSessions(null); setAttempt(n => n + 1); }} />
       </div>
-      {exportError && <p className="text-sm text-flag-text">{exportError}</p>}
 
       {loadError ? (
         <div role="alert"><p>Could not load your cases.</p><button className="min-h-tap text-accent" onClick={() => { setLoadError(false); setAttempt(n => n + 1); }}>Try again</button></div>

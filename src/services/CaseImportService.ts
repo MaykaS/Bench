@@ -12,9 +12,9 @@ export class CaseImportService {
   private parseJson(text: string): ImportPreview<CaseSessionData> {
     try {
       const source = JSON.parse(text) as { records?: Partial<CaseSessionData>[] } | Partial<CaseSessionData>[];
+      if (!Array.isArray(source) && (!source || (source as {format?: string}).format !== "bench-cases" || (source as {version?: number}).version !== 1)) return this.failure("Choose a version 1 Bench cases JSON backup.");
       const rows = Array.isArray(source) ? source : source.records;
       if (!Array.isArray(rows)) return this.failure("JSON backup must contain a records array.");
-      if (rows.length === 0) return this.failure("The JSON backup contains no case records.");
       return this.validate(rows.map((row, i) => this.normalize(row, i)), "Bench cases JSON");
     } catch { return this.failure("The JSON file could not be read."); }
   }

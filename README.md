@@ -13,7 +13,7 @@ A personal, mobile-first recruiting tracker built with Next.js, TypeScript, Tail
 
 Data stays in your browser's localStorage. Authentication is stubbed; cross-device sync and Supabase are planned. Coffee chats and some prep sections currently show placeholders.
 
-Use the Import and Export JSON controls on the Cases and PEI screens to move data between browsers or devices. Imports show a validation preview and replace only the selected dataset after confirmation. Automatic cross-device sync will come with Supabase.
+Use the matching upload and download arrows on Applications, Network, Cases, and PEI to transfer versioned JSON backups between browsers or devices. Transfer Network too when moving applications with linked contacts. Case Excel and PEI Word files are still accepted by their upload controls. Imports show a validation preview and replace only the selected dataset after confirmation. Automatic cross-device sync will come with Supabase.
 
 ## Run locally
 
