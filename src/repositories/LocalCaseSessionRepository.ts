@@ -1,3 +1,4 @@
+import { browserStorage, type RecordStorage } from "./RecordStorage";
 import { CaseSession, type CaseSessionData } from "@/domain/CaseSession";
 import type {
   CaseSessionRepository,
@@ -7,31 +8,33 @@ import seedData from "../../seed/case-sessions.json";
 
 const STORAGE_KEY = "bench:case_sessions";
 
-function readAll(): CaseSessionData[] {
-  if (typeof window === "undefined") return seedData as CaseSessionData[];
-  const raw = window.localStorage.getItem(STORAGE_KEY);
+function readAll(storage?: RecordStorage): CaseSessionData[] {
+  if (!storage) return seedData as CaseSessionData[];
+  const raw = storage.getItem(STORAGE_KEY);
   if (raw === null) {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(seedData));
+    storage.setItem(STORAGE_KEY, JSON.stringify(seedData));
     return seedData as CaseSessionData[];
   }
   return JSON.parse(raw) as CaseSessionData[];
 }
 
-function writeAll(rows: CaseSessionData[]): void {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
+function writeAll(rows: CaseSessionData[], storage?: RecordStorage): void {
+  if (!storage) return;
+  storage.setItem(STORAGE_KEY, JSON.stringify(rows));
 }
 
 export class LocalCaseSessionRepository implements CaseSessionRepository {
+  constructor(private readonly storage: RecordStorage | undefined = browserStorage()) {}
+  private writeAll(rows: CaseSessionData[]) { writeAll(rows, this.storage); }
   async list(userId: string): Promise<CaseSession[]> {
-    return readAll()
+    return readAll(this.storage)
       .filter((row) => row.userId === userId)
       .sort((a, b) => a.sessionNumber - b.sessionNumber)
       .map((row) => new CaseSession(row));
   }
 
   async get(id: string, userId: string): Promise<CaseSession | null> {
-    const row = readAll().find((r) => r.id === id && r.userId === userId);
+    const row = readAll(this.storage).find((r) => r.id === id && r.userId === userId);
     return row ? new CaseSession(row) : null;
   }
 
@@ -39,7 +42,7 @@ export class LocalCaseSessionRepository implements CaseSessionRepository {
     userId: string,
     input: NewCaseSessionInput,
   ): Promise<CaseSession> {
-    const rows = readAll();
+    const rows = readAll(this.storage);
     const nextNumber =
       rows
         .filter((r) => r.userId === userId)
@@ -68,7 +71,7 @@ export class LocalCaseSessionRepository implements CaseSessionRepository {
       createdAt: new Date().toISOString(),
     };
 
-    writeAll([...rows, row]);
+    this.writeAll([...rows, row]);
     return new CaseSession(row);
   }
 
@@ -77,7 +80,7 @@ export class LocalCaseSessionRepository implements CaseSessionRepository {
     userId: string,
     input: Partial<NewCaseSessionInput>,
   ): Promise<CaseSession> {
-    const rows = readAll();
+    const rows = readAll(this.storage);
     const index = rows.findIndex((r) => r.id === id && r.userId === userId);
     if (index === -1) throw new Error("Case session not found.");
 
@@ -94,16 +97,16 @@ export class LocalCaseSessionRepository implements CaseSessionRepository {
     };
 
     rows[index] = updated;
-    writeAll(rows);
+    this.writeAll(rows);
     return new CaseSession(updated);
   }
 
   async delete(id: string, userId: string): Promise<void> {
-    writeAll(readAll().filter((r) => !(r.id === id && r.userId === userId)));
+    this.writeAll(readAll(this.storage).filter((r) => !(r.id === id && r.userId === userId)));
   }
 
   async replaceAll(userId: string, records: CaseSessionData[]): Promise<void> {
-    const existing = readAll().filter((row) => row.userId !== userId);
-    writeAll([...existing, ...records.map((row) => ({ ...row, userId }))]);
+    const existing = readAll(this.storage).filter((row) => row.userId !== userId);
+    this.writeAll([...existing, ...records.map((row) => ({ ...row, userId }))]);
   }
 }

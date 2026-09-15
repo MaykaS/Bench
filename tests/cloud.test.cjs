@@ -1,0 +1,83 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- CommonJS loader tests TypeScript repositories without adding a test runtime dependency. */
+const fs = require('node:fs');
+const path = require('node:path');
+const Module = require('node:module');
+const ts = require('typescript');
+const assert = require('node:assert/strict');
+const { test } = require('node:test');
+const resolveOriginal = Module._resolveFilename;
+Module._resolveFilename = function (id, ...args) {
+  return resolveOriginal.call(this, id.startsWith('@/') ? path.join(__dirname, '../src', id.slice(2)) : id, ...args);
+};
+require.extensions['.ts'] = (mod, filename) => mod._compile(ts.transpileModule(fs.readFileSync(filename, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, filename);
+const { OWNER_ID, storageKeys } = require('../src/repositories/cloud/CloudData.ts');
+const { MemoryRecordStorage } = require('../src/repositories/RecordStorage.ts');
+const { LocalNetworkContactRepository } = require('../src/repositories/LocalNetworkContactRepository.ts');
+const { SupabaseNetworkContactRepository } = require('../src/repositories/cloud/SupabaseNetworkContactRepository.ts');
+const { prepareCloudMigration } = require('../src/services/CloudMigrationService.ts');
+const { validateCloudData } = require('../src/services/CloudValidation.ts');
+const date = '2026-09-15T00:00:00Z';
+const contact = { id: 'contact-current', userId: OWNER_ID, name: 'Example Contact', company: 'Example', role: null, email: null, profileUrl: null, notes: 'Keep\n\nthese paragraphs.', createdAt: date, updatedAt: date, applicationIds: ['application-1'] };
+const app = { id: 'application-1', userId: OWNER_ID, company: 'Example', role: 'Engineer', appliedOn: '2026-09-15', location: null, link: null, referred: false, contactIds: ['contact-old', 'contact-current'], notes: null, resumeVersion: null, status: 'applied', nextActionOn: null, nextActionNote: null, timeline: [], completedSteps: [], createdAt: date, updatedAt: date };
+const fixture = () => structuredClone({ cases: [], pei: [], applications: [app], network: [contact] });
+
+test('migration repairs only a unique saved application reference and preserves original backups', async () => {
+  const input = fixture(), before = structuredClone(input);
+  const result = await prepareCloudMigration(input);
+  assert.deepEqual(input, before);
+  assert.deepEqual(result.data.applications[0].contactIds, ['contact-current']);
+  assert.deepEqual(result.data.network[0].sourceIds, ['contact-old']);
+  assert.equal(result.data.network[0].notes, contact.notes);
+  assert.equal(result.notices.length, 1);
+  input.network.push({ ...contact, id: 'another-match' });
+  await assert.rejects(() => prepareCloudMigration(input), /could not be matched/);
+});
+
+test('cloud validation rejects malformed data and scopes uploaded user IDs', async () => {
+  const input = fixture(); input.network[0].userId = 'not-the-owner';
+  assert.equal((await validateCloudData(input)).network[0].userId, OWNER_ID);
+  input.network.push(input.network[0]);
+  await assert.rejects(() => validateCloudData(input), /Duplicate/);
+  await assert.rejects(() => validateCloudData({}), /Invalid/);
+  const invalid = fixture(); invalid.applications[0].status = 'invented';
+  await assert.rejects(() => validateCloudData(invalid), /Invalid status/);
+});
+
+test('isolated repositories retain follow-up history and atomically roll back relationships', async () => {
+  const storage = new MemoryRecordStorage(Object.fromEntries(Object.entries(storageKeys).map(([key, value]) => [value, fixture()[key]])));
+  const repo = new LocalNetworkContactRepository(storage);
+  const saved = await repo.save(OWNER_ID, contact.id, { ...contact, nextFollowUpOn: '2026-09-25', nextFollowUpNote: 'Meeting' }, [app.id]);
+  assert.equal(saved.followUpState('2026-09-24'), 'pending');
+  assert.equal(saved.followUpState('2026-09-25'), 'due');
+  assert.equal(saved.followUpState('2026-09-26'), 'overdue');
+  const completed = await repo.completeFollowUp(contact.id, OWNER_ID, { expectedOn: '2026-09-25', expectedNote: 'Meeting', completedOn: '2026-09-24', notes: 'Went well', nextOn: null, nextNote: null });
+  assert.equal(completed.completedFollowUps[0].notes, 'Went well');
+  assert.equal(completed.nextFollowUpOn, null);
+  const before = [storage.getItem(storageKeys.network), storage.getItem(storageKeys.applications)];
+  const originalSet = storage.setItem.bind(storage); let fail = true;
+  storage.setItem = (key, value) => { if (key === storageKeys.applications && fail) { fail = false; throw new Error('Quota'); } originalSet(key, value); };
+  await assert.rejects(() => repo.save(OWNER_ID, contact.id, { ...completed, name: 'Should not save' }, []));
+  assert.deepEqual([storage.getItem(storageKeys.network), storage.getItem(storageKeys.applications)], before);
+});
+
+test('cloud saves reject concurrent changes and never mutate browser backups', async () => {
+  const originalFetch = global.fetch;
+  let snapshot = { revision: 5, data: fixture() }, conflict = false;
+  global.fetch = async (_url, options) => {
+    if (options?.method !== 'PUT') return Response.json(snapshot);
+    if (conflict) return Response.json({ error: 'Another device saved a change' }, { status: 409 });
+    const value = JSON.parse(options.body);
+    assert.equal(value.revision, snapshot.revision);
+    snapshot = { ...value, revision: value.revision + 1 };
+    return Response.json(snapshot);
+  };
+  try {
+    const repo = new SupabaseNetworkContactRepository();
+    const saved = await repo.save(OWNER_ID, contact.id, { ...contact, name: 'Saved in cloud' }, [app.id]);
+    assert.equal(saved.name, 'Saved in cloud');
+    assert.equal(contact.name, 'Example Contact');
+    const before = structuredClone(snapshot); conflict = true;
+    await assert.rejects(() => repo.save(OWNER_ID, contact.id, { ...contact, name: 'Stale draft' }, []), /Another device/);
+    assert.deepEqual(snapshot, before);
+  } finally { global.fetch = originalFetch; }
+});

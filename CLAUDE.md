@@ -13,7 +13,7 @@ Primary device is **phone**. Desktop is the wide variant, not the reverse.
 
 - Next.js (App Router) + TypeScript
 - Tailwind CSS
-- Supabase (Postgres + Auth + RLS) — **deferred, see "Storage phases" below**
+- Supabase (Postgres + RLS + one-time device pairing), optional cloud mode
 - `exceljs` for xlsx export
 - Vercel, with a PWA manifest for iOS home-screen install
 
@@ -22,9 +22,9 @@ something 20 lines solves.
 
 ## Storage phases
 
-Supabase is not wired up yet. Build against local storage first and swap later.
+Local mode and optional Supabase cloud mode are selected through the repository factory.
 
-**Phase 1 (now).** Each repository has a local implementation backed by a JSON
+**Local mode.** Each repository has a local implementation backed by a JSON
 seed file in `seed/` plus `localStorage` for writes. Auth is a stubbed
 `SessionProvider` returning a fixed user id. No network, no keys, no setup.
 

@@ -1,3 +1,4 @@
+import { CloudGate } from "@/components/pairing/CloudGate";
 import type { Metadata, Viewport } from "next";
 import { Instrument_Sans } from "next/font/google";
 import type { ReactNode } from "react";
@@ -41,7 +42,7 @@ export default async function RootLayout({
     <html lang="en" className={instrumentSans.variable}>
       <body className="font-sans antialiased">
         <SessionProvider session={session}>
-          <NavShell>{children}</NavShell>
+          <CloudGate><NavShell>{children}</NavShell></CloudGate>
         </SessionProvider>
       </body>
     </html>
