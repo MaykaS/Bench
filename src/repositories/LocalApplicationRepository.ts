@@ -1,7 +1,8 @@
 import { Application, type ApplicationData } from "@/domain/Application";
 import type { ApplicationRepository, NewApplicationInput } from "./ApplicationRepository";
+import { recoverLocalTransaction } from "./localTransaction";
 const KEY = "bench:applications";
-function read(): ApplicationData[] { if (typeof window === "undefined") return []; const raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : []; }
+function read(): ApplicationData[] { if (typeof window === "undefined") return []; recoverLocalTransaction(); const raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : []; }
 function write(rows: ApplicationData[]) { if (typeof window !== "undefined") localStorage.setItem(KEY, JSON.stringify(rows)); }
 export class LocalApplicationRepository implements ApplicationRepository {
   async completeNextStep(id: string, userId: string, input: { expectedOn: string; expectedNote: string | null; completedOn: string; notes: string | null; nextOn: string | null; nextNote: string | null }) {

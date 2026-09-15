@@ -1,3 +1,5 @@
+import { networkValidation } from "./NetworkValidation";
+import type { NetworkContactData } from "@/domain/NetworkContact";
 import type { ImportPreview } from "./ImportTypes";
 import { APPLICATION_STATUSES } from "@/domain/Application";
 
@@ -32,7 +34,7 @@ export class JsonBackupService {
           if (typeof row.referred !== "boolean" || !Array.isArray(row.contactIds) || !row.contactIds.every(string)) fail("Invalid referral or contact selection.");
           if (!APPLICATION_STATUSES.includes(row.status as never) || (row.nextActionOn !== null && !date(row.nextActionOn))) fail("Invalid status or next-action date.");
           if (!Array.isArray(row.timeline) || !row.timeline.every(e => object(e) && string(e.id) && date(e.date) && string(e.createdAt) && (e.note === null || string(e.note)) && APPLICATION_STATUSES.includes(e.label as never))) fail("Invalid timeline events.");
-        } else if (!string(row.name) || !row.name.trim()) fail("Contact name is required.");
+        } else { if (!string(row.name) || !row.name.trim()) fail("Contact name is required."); networkValidation(row as unknown as NetworkContactData).forEach(fail); }
         result.records.push({ ...row, userId } as T);
       });
       if (format === "bench-applications") result.warnings.push({ message: "Contact links use Network IDs. Transfer your Network JSON too to display linked contact names on another device. Resume names are preserved in each application." });
