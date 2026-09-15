@@ -16,6 +16,6 @@ export function GoalEditor({initial,stories,onSave,onCancel,onDelete}:{initial:G
       {draft.kind==='pei'&&<fieldset className="sm:col-span-2"><legend className="mb-2 text-sm text-secondary">Stories to include</legend><div className="grid gap-1 sm:grid-cols-2">{stories.map(s=><label key={s.id} className="flex min-h-tap items-center gap-2 text-sm"><input type="checkbox" checked={draft.storyIds.includes(s.id)} onChange={e=>setDraft({...draft,storyIds:e.target.checked?[...draft.storyIds,s.id]:draft.storyIds.filter(id=>id!==s.id)})}/><span>{s.title} <span className="text-secondary">({s.slot})</span></span></label>)}</div></fieldset>}
     </fieldset>
     {error&&<p role="alert" className="text-sm text-flag-text">{error}</p>}
-    <div className="flex flex-wrap gap-2"><button disabled={busy} className="btn btn-primary">{busy?'Saving…':'Save goal'}</button><button disabled={busy} type="button" className="btn" onClick={onCancel}>Cancel</button>{onDelete&&<button disabled={busy} type="button" className="btn btn-danger sm:ml-auto" onClick={()=>{if(confirm('Delete this goal? Your cases and practice history will stay.'))void submit(true);}}>Delete goal</button>}</div>
+    <div className="flex flex-wrap gap-2"><button disabled={busy} className="btn btn-primary">{busy?'Saving…':'Save goal'}</button><button disabled={busy} type="button" className="btn" onClick={onCancel}>Cancel</button></div>
   </form>;
 }

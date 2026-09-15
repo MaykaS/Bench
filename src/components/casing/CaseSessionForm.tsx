@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState, type FormEvent } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { CaseSession } from "@/domain/CaseSession";
@@ -20,7 +20,7 @@ const ROLES: { value: CaseRole; label: string }[] = [
   { value: "observer", label: "I observed" },
 ];
 
-export function CaseSessionForm({ initial, knownNames }: { initial?: CaseSession; knownNames: string[] }) {
+export function CaseSessionForm({ initial, knownNames, actions }: { initial?: CaseSession; knownNames: string[]; actions?: ReactNode }) {
   const router = useRouter();
   const { userId } = useSession();
 
@@ -89,7 +89,7 @@ export function CaseSessionForm({ initial, knownNames }: { initial?: CaseSession
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 pb-20">
-      <h1 className="text-lg font-medium text-ink">{initial ? "Edit case" : "Log a case"}</h1>
+      <div className="flex items-center justify-between gap-2"><h1 className="text-lg font-medium text-ink">{initial ? "Edit case" : "Log a case"}</h1>{actions}</div>
 
       <label className="block">
         <span className="mb-1 block text-sm text-secondary">Case name</span>

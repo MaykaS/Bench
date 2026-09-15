@@ -60,7 +60,7 @@ export default function CasingConsultingPage() {
         <>
           <div className="flex min-w-0 flex-col gap-4">
             {sessions.map((session) => (
-              <CaseSessionCard key={session.id} session={session} />
+              <CaseSessionCard key={session.id} session={session} onDelete={async()=>{await getCaseSessionRepository().delete(session.id,userId);setSessions(rows=>rows?.filter(s=>s.id!==session.id)??null);}}/>
             ))}
           </div>
         </>

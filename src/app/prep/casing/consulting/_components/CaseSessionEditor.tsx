@@ -27,5 +27,5 @@ export function CaseSessionEditor({ id }: { id?: string }) {
  }, [id, userId, attempt]);
  if (error) return <div className="space-y-3"><p role="alert">{error}</p><button className="min-h-tap rounded-card border border-hairline px-4" onClick={() => {setError(null); setAttempt(n => n + 1);}}>Retry</button><Link className="flex min-h-tap items-center text-accent" href="/prep/casing/consulting">Back to cases</Link></div>;
  if (!data) return <p className="text-secondary">Loading case…</p>;
- return <div className="space-y-5"><CaseSessionForm initial={data.initial} knownNames={data.names} />{id&&<DeleteRecord label="case" description="Delete this case session? Your solved-case goals will recalculate." onDelete={async()=>{await getCaseSessionRepository().delete(id,userId);router.push("/prep/casing/consulting");}}/>}</div>;
+ return <CaseSessionForm initial={data.initial} knownNames={data.names} actions={id&&<DeleteRecord label={data.initial?.caseName??"case"} description="Delete this case session? Your solved-case goals will recalculate." onDelete={async()=>{await getCaseSessionRepository().delete(id,userId);router.push("/prep/casing/consulting");}}/>}/>;
 }
