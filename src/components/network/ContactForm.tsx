@@ -10,12 +10,12 @@ export function ContactForm({ initial, applications, initialLinks = [], save, ca
 }) {
   const [draft, setDraft] = useState<NewNetworkContactInput>(() => ({
     ...initial, name: initial?.name ?? "", company: initial?.company ?? company, role: initial?.role ?? "",
-    email: initial?.email ?? "", profileUrl: initial?.profileUrl ?? "", notes: initial?.notes ?? "",
+    phone: initial?.phone ?? "", email: initial?.email ?? "", profileUrl: initial?.profileUrl ?? "", notes: initial?.notes ?? "",
   }));
   const [tags, setTags] = useState(initial?.tags.join("; ") ?? "");
   const [links, setLinks] = useState(initialLinks);
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
-  const field = "mt-1 min-h-tap w-full min-w-0 rounded-card border border-hairline bg-surface p-3 text-base";
+  const field = "mt-1 min-h-tap w-full min-w-0 rounded-card border border-hairline bg-surface px-3 py-2 text-base";
   function text(key: keyof NewNetworkContactInput, label: string, type = "text", required = false) {
     return <label key={key} className="min-w-0 text-sm text-secondary">{label}<input required={required} type={type} value={String(draft[key] ?? "")} onChange={e => setDraft(d => ({...d, [key]: e.target.value}))} className={field} /></label>;
   }
@@ -33,7 +33,7 @@ export function ContactForm({ initial, applications, initialLinks = [], save, ca
   return <form onSubmit={submit} className="space-y-5">
     <fieldset disabled={busy} className="grid min-w-0 gap-4 md:grid-cols-2">
       <legend className="mb-3 text-lg font-semibold text-ink">Contact details</legend>
-      {text("name", "Name", "text", true)}{text("company", "Company")}{text("role", "Role")}{text("location", "Location")}{text("email", "Email", "email")}{text("profileUrl", "LinkedIn / profile URL", "url")}{text("source", "Source")}{text("howKnown", "How I know them")}
+      {text("name", "Name", "text", true)}{text("company", "Company")}{text("role", "Role")}{text("location", "Location")}{text("email", "Email", "email")}{text("phone", "Phone number", "tel")}{text("profileUrl", "LinkedIn / profile URL", "url")}{text("source", "Source")}{text("howKnown", "How I know them")}
       <label className="text-sm text-secondary">Tags (separate with semicolons)<input value={tags} onChange={e => setTags(e.target.value)} className={field} /></label>
       <label className="text-sm text-secondary">Relationship strength<select value={draft.relationshipStrength ?? ""} onChange={e => setDraft(d => ({...d, relationshipStrength: e.target.value ? Number(e.target.value) : null}))} className={field}><option value="">Not recorded</option>{[1,2,3,4,5].map(n => <option key={n} value={n}>{n} / 5</option>)}</select></label>
       <label className="text-sm text-secondary">Can refer<select value={draft.canRefer ?? ""} onChange={e => setDraft(d => ({...d, canRefer: e.target.value as NewNetworkContactInput["canRefer"] || null}))} className={field}><option value="">Not recorded</option>{["Yes","No","Maybe"].map(v => <option key={v}>{v}</option>)}</select></label>

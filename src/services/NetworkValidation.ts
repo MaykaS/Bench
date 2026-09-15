@@ -7,7 +7,7 @@ export function validDate(value: unknown): boolean {
 }
 export function networkValidation(row: NetworkContactData & { applicationIds?: string[] }): string[] {
   const errors: string[] = [];
-  for (const key of ["source", "howKnown", "location", "nextFollowUpNote", "referralStatus", "actionItems", "sourceInfo"] as const) if (row[key] != null && typeof row[key] !== "string") errors.push(`${key} must be text.`);
+  for (const key of ["phone", "source", "howKnown", "location", "nextFollowUpNote", "referralStatus", "actionItems", "sourceInfo"] as const) if (row[key] != null && typeof row[key] !== "string") errors.push(`${key} must be text.`);
   for (const key of ["lastContactOn", "nextFollowUpOn"] as const) if (row[key] != null && !validDate(row[key])) errors.push(`${key} must be a valid date.`);
   for (const key of ["tags", "sourceIds", "linkedApplicationHints", "applicationIds"] as const) if (row[key] !== undefined && (!Array.isArray(row[key]) || !row[key]!.every(v => typeof v === "string"))) errors.push(`${key} must be a list of text values.`);
   if (row.relationshipStrength != null && (!Number.isInteger(row.relationshipStrength) || row.relationshipStrength < 1 || row.relationshipStrength > 5)) errors.push("Relationship strength must be 1–5.");

@@ -3,7 +3,7 @@ import type { CompletedStep } from "./Application";
 export interface NetworkContactData {
   id: string; userId: string; name: string;
   company: string | null; role: string | null; email: string | null;
-  profileUrl: string | null; notes: string | null;
+  profileUrl: string | null; notes: string | null; phone?: string | null;
   createdAt: string; updatedAt: string;
   source?: string | null; howKnown?: string | null; tags?: string[];
   location?: string | null; relationshipStrength?: number | null;
@@ -14,7 +14,7 @@ export interface NetworkContactData {
   linkedApplicationHints?: string[]; completedFollowUps?: CompletedStep[];
 }
 export const contactDefaults = {
-  source: null, howKnown: null, tags: [] as string[], location: null,
+  phone: null, source: null, howKnown: null, tags: [] as string[], location: null,
   relationshipStrength: null, lastContactOn: null, nextFollowUpOn: null,
   nextFollowUpNote: null, canRefer: null, referralStatus: null, priority: null,
   actionItems: null, sourceInfo: null, sourceIds: [] as string[],
@@ -23,7 +23,7 @@ export const contactDefaults = {
 export class NetworkContact implements NetworkContactData {
   readonly id!: string; readonly userId!: string; readonly name!: string;
   readonly company!: string | null; readonly role!: string | null;
-  readonly email!: string | null; readonly profileUrl!: string | null;
+  readonly email!: string | null; readonly profileUrl!: string | null; readonly phone!: string | null;
   readonly notes!: string | null; readonly createdAt!: string; readonly updatedAt!: string;
   readonly source!: string | null; readonly howKnown!: string | null; readonly tags!: string[];
   readonly location!: string | null; readonly relationshipStrength!: number | null;

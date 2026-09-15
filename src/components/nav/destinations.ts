@@ -25,6 +25,11 @@ export function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
+/** Within a navigation group, only the most specific matching route is selected. */
+export function activeDestination(pathname: string, items: Destination[]): string | undefined {
+  return items.filter(item=>isActive(pathname,item.href)).sort((a,b)=>b.href.length-a.href.length)[0]?.href;
+}
+
 export const networkTabs: Destination[] = [
   { label: "Network", href: "/network" },
   { label: "Coffee chats", href: "/network/coffee-chats" },

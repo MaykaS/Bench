@@ -1,6 +1,6 @@
 import { browserStorage, type RecordStorage } from "./RecordStorage";
 const JOURNAL = "bench:network_transaction";
-const ALLOWED = ["bench:network_contacts", "bench:applications"];
+const ALLOWED = ["bench:network_contacts", "bench:applications", "bench:preparation", "bench:pei_stories"];
 
 // Before either dataset is read, roll back any interrupted multi-key write.
 export function recoverLocalTransaction(storage: RecordStorage | undefined = browserStorage()) {

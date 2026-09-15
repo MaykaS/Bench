@@ -125,3 +125,19 @@ test('cloud saves reject concurrent changes and never mutate browser backups', a
     assert.deepEqual(snapshot, before);
   } finally { global.fetch = originalFetch; }
 });
+
+const { activeDestination, sidebarItems, networkTabs } = require('../src/components/nav/destinations.ts');
+test('navigation selects only the deepest matching destination within each group',()=>{
+ assert.equal(activeDestination('/network/coffee-chats',networkTabs),'/network/coffee-chats');
+ assert.equal(activeDestination('/network/coffee-chats',sidebarItems),'/network/coffee-chats');
+ assert.equal(activeDestination('/network/some-id/edit',networkTabs),'/network');
+});
+test('phone survives backup validation and deleting a contact removes only its relationships',async()=>{
+ const { JsonBackupService }=require('../src/services/JsonBackupService.ts');
+ const data=fixture();data.network[0].phone='+1 (212) 555-0100';
+ const file=new File([JSON.stringify({format:'bench-network',version:1,records:data.network})],'network.json');
+ const parsed=await JsonBackupService.parse(file,'bench-network',OWNER_ID);assert.deepEqual(parsed.errors,[]);assert.equal(parsed.records[0].phone,data.network[0].phone);
+ const storage=new MemoryRecordStorage({[storageKeys.network]:data.network,[storageKeys.applications]:data.applications});
+ const repo=new LocalNetworkContactRepository(storage);await repo.delete(contact.id,OWNER_ID);
+ assert.equal((await repo.list(OWNER_ID)).length,0);const apps=JSON.parse(storage.getItem(storageKeys.applications));assert.equal(apps.length,1);assert.equal(apps[0].company,app.company);assert.ok(!apps[0].contactIds.includes(contact.id));
+});

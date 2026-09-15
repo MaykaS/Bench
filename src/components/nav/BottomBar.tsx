@@ -28,6 +28,7 @@ export function BottomBar() {
           <Link
             key={item.href}
             href={item.href}
+            aria-current={active ? "page" : undefined}
             className="flex min-h-tap flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs"
           >
             <Icon className={`h-6 w-6 ${active ? "text-accent" : "text-secondary"}`} />

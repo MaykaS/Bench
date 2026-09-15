@@ -1,3 +1,4 @@
+import { recoverLocalTransaction } from "./localTransaction";
 import { browserStorage, type RecordStorage } from './RecordStorage';
 import type { PreparationData } from './PreparationRepository';
 import type { PeiStoryData } from '@/domain/PeiStory';
@@ -7,6 +8,7 @@ export const PREPARATION_KEY = 'bench:preparation';
 export class LocalPreparationStore {
   constructor(readonly storage: RecordStorage | undefined = browserStorage()) {}
   read(userId: string): PreparationData {
+    recoverLocalTransaction(this.storage);
     const raw = this.storage?.getItem(PREPARATION_KEY);
     if (raw != null) { const rows = JSON.parse(raw); validatePreparation(rows); const row = (rows as PreparationData[]).find(r=>r.userId===userId); if (row) return row; }
     const storyRaw = this.storage?.getItem('bench:pei_stories');

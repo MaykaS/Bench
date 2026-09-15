@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { isActive, sidebarItems } from "./destinations";
+import { activeDestination, sidebarItems } from "./destinations";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -13,13 +13,14 @@ export function Sidebar() {
       aria-label="Primary"
     >
       {sidebarItems.map((item, index) => {
-        const active = isActive(pathname, item.href);
+        const active = activeDestination(pathname, sidebarItems) === item.href;
         return (
           <div key={item.href}>
             <Link
               href={item.href}
-              className={`block rounded-card px-3 py-2 text-sm ${
-                active ? "bg-page text-accent" : "text-ink hover:bg-page"
+              aria-current={active ? "page" : undefined}
+              className={`flex min-h-tap items-center rounded-lg px-3 py-2 text-sm ${
+                active ? "bg-blue-50 font-medium text-accent" : "text-ink hover:bg-page"
               }`}
             >
               {item.label}

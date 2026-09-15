@@ -14,6 +14,11 @@ function read<T>(key: string, storage?: RecordStorage): T[] {
 export class LocalNetworkContactRepository implements NetworkContactRepository {
   constructor(private readonly storage: RecordStorage | undefined = browserStorage()) {}
   private commit(changes: Record<string, unknown>) { commitLocalTransaction(changes, this.storage); }
+  async delete(id: string, userId: string) {
+    const contacts=read<NetworkContactData>(KEY,this.storage), apps=read<ApplicationData>(APP_KEY,this.storage);
+    if(!contacts.some(c=>c.id===id&&c.userId===userId)) throw new Error('Contact not found.');
+    this.commit({[KEY]:contacts.filter(c=>c.id!==id||c.userId!==userId),[APP_KEY]:apps.map(a=>a.userId===userId&&a.contactIds.includes(id)?{...a,contactIds:a.contactIds.filter(c=>c!==id),updatedAt:new Date().toISOString()}:a)});
+  }
   async list(userId: string) { return read<NetworkContactData>(KEY, this.storage).filter(r => r.userId === userId).sort((a,b) => a.name.localeCompare(b.name)).map(r => new NetworkContact(r)); }
   async get(id: string, userId: string) { const row = read<NetworkContactData>(KEY, this.storage).find(c => c.id === id && c.userId === userId); return row ? new NetworkContact(row) : null; }
   async create(userId: string, input: NewNetworkContactInput) { return this.save(userId, null, input, []); }

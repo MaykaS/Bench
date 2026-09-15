@@ -33,3 +33,9 @@ Run `npm run build` for a production build and `npm run lint` for lint checks.
 See [the spec](docs/spec.md), [build tasks](docs/tasks.md), and [project conventions](CLAUDE.md).
 
 For cloud storage and one-time device pairing, follow [Supabase setup](docs/supabase-setup.md).
+
+## Goals and practice
+
+Home tracks editable consulting/tech case goals, PEI levels, and custom counts. Case goals count sessions where you solve the case. PEI levels are self-assessed per story; Log practice records a date, level, and optional notes. Goals have their own JSON arrows; PEI JSON includes practice history. Older PEI files keep existing practice data.
+
+Cloud installations also need `supabase/migrations/202609150002_preparation.sql`. It adds preparation storage and preserves it when older clients save. Read the [usability review](docs/usability-review-2026-09-15.md) for remaining gaps and recommended next steps.

@@ -1,4 +1,6 @@
 "use client";
+import { DeleteRecord } from "@/components/DeleteRecord";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { CaseSession } from "@/domain/CaseSession";
@@ -7,6 +9,7 @@ import { getKnownPartnerNames } from "@/lib/casing/knownNames";
 import { useSession } from "@/lib/session/SessionContext";
 import { getCaseSessionRepository } from "@/repositories/factory";
 export function CaseSessionEditor({ id }: { id?: string }) {
+ const router=useRouter();
  const { userId } = useSession();
  const [data, setData] = useState<{ initial?: CaseSession; names: string[] } | null>(null);
  const [error, setError] = useState<string | null>(null);
@@ -24,5 +27,5 @@ export function CaseSessionEditor({ id }: { id?: string }) {
  }, [id, userId, attempt]);
  if (error) return <div className="space-y-3"><p role="alert">{error}</p><button className="min-h-tap rounded-card border border-hairline px-4" onClick={() => {setError(null); setAttempt(n => n + 1);}}>Retry</button><Link className="flex min-h-tap items-center text-accent" href="/prep/casing/consulting">Back to cases</Link></div>;
  if (!data) return <p className="text-secondary">Loading case…</p>;
- return <CaseSessionForm initial={data.initial} knownNames={data.names} />;
+ return <div className="space-y-5"><CaseSessionForm initial={data.initial} knownNames={data.names} />{id&&<DeleteRecord label="case" description="Delete this case session? Your solved-case goals will recalculate." onDelete={async()=>{await getCaseSessionRepository().delete(id,userId);router.push("/prep/casing/consulting");}}/>}</div>;
 }

@@ -231,11 +231,11 @@ export function CaseSessionForm({ initial, knownNames }: { initial?: CaseSession
       <button
         type="submit"
         disabled={!canSave || saving}
-        className="min-h-tap rounded-card bg-accent text-base font-medium text-surface disabled:opacity-50"
+        className="btn btn-primary md:self-start disabled:opacity-50"
       >
         {saving ? "Saving…" : initial ? "Save changes" : "Save case"}
       </button>
-      <Link href="/prep/casing/consulting" className="flex min-h-tap items-center justify-center rounded-card border border-hairline text-secondary">Cancel</Link>
+      <Link href="/prep/casing/consulting" className="btn md:self-start">Cancel</Link>
     </form>
   );
 }

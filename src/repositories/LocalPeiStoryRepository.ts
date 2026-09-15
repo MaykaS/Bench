@@ -1,3 +1,4 @@
+import { recoverLocalTransaction } from "./localTransaction";
 import { browserStorage, type RecordStorage } from "./RecordStorage";
 import { PeiStory, type PeiStoryData } from "@/domain/PeiStory";
 import type { NewPeiStoryInput, PeiStoryRepository } from "./PeiStoryRepository";
@@ -5,9 +6,10 @@ import seedData from "../../seed/pei-stories.json";
 const KEY = "bench:pei_stories";
 function readAll(storage?: RecordStorage): PeiStoryData[] {
   if (!storage) return seedData as PeiStoryData[];
+  recoverLocalTransaction(storage);
   const raw = storage.getItem(KEY);
   if (raw === null) { const rows = seedData as PeiStoryData[]; storage.setItem(KEY, JSON.stringify(rows)); return rows; }
-  try { const parsed = JSON.parse(raw); return Array.isArray(parsed) ? parsed : seedData as PeiStoryData[]; }
+  try { const parsed = JSON.parse(raw); if (!Array.isArray(parsed)) throw new Error("Invalid saved stories."); return parsed; }
   catch { throw new Error("PEI story storage is invalid."); }
 }
 export class LocalPeiStoryRepository implements PeiStoryRepository {
