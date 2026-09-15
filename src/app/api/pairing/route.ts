@@ -1,17 +1,18 @@
+import { cloudEnabled } from "@/lib/pairing/config";
 import { cookies } from "next/headers";
 import { randomUUID } from "node:crypto";
 import { supabaseRpc, CloudError } from "@/repositories/cloud/SupabaseGateway";
 import { COOKIE, deviceHash, hashToken, newToken, requireSameOrigin, readBody, errorResponse } from "@/lib/pairing/server";
-import { isCloud } from "@/repositories/cloud/CloudData";
+
 export const runtime = "nodejs";
 export async function GET() {
-  if (!isCloud()) return Response.json({mode:"local"});
+  if (!cloudEnabled()) return Response.json({mode:"local"});
   try { return Response.json({mode:"supabase",...await supabaseRpc<object>("bench_pair",{p_action:"list",p_hash:await deviceHash()})},{headers:{"Cache-Control":"no-store"}}); }
   catch(error) { return errorResponse(error); }
 }
 export async function POST(request: Request) {
   try {
-    if (!isCloud()) throw new CloudError(503,"Cloud pairing has not been enabled yet.");
+    if (!cloudEnabled()) throw new CloudError(503,"Cloud pairing has not been enabled yet.");
     requireSameOrigin(request);
     const body = await readBody(request);
     if (body.action === "redeem") {

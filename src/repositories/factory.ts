@@ -18,25 +18,25 @@ import { LocalNetworkContactRepository } from "./LocalNetworkContactRepository";
 
 export type StoragePhase = "local" | "supabase";
 
-const STORAGE_PHASE: StoragePhase = isCloud() ? "supabase" : "local";
+
 
 export function getStoragePhase(): StoragePhase {
-  return STORAGE_PHASE;
+  return isCloud() ? "supabase" : "local";
 }
 
 export function getCaseSessionRepository(): CaseSessionRepository {
-  if (STORAGE_PHASE === "local") return new LocalCaseSessionRepository();
+  if (getStoragePhase() === "local") return new LocalCaseSessionRepository();
   return new SupabaseCaseSessionRepository();
 }
 export function getPeiStoryRepository(): PeiStoryRepository {
-  if (STORAGE_PHASE === "local") return new LocalPeiStoryRepository();
+  if (getStoragePhase() === "local") return new LocalPeiStoryRepository();
   return new SupabasePeiStoryRepository();
 }
 export function getApplicationRepository(): ApplicationRepository {
-  if (STORAGE_PHASE === "local") return new LocalApplicationRepository();
+  if (getStoragePhase() === "local") return new LocalApplicationRepository();
   return new SupabaseApplicationRepository();
 }
 export function getNetworkContactRepository(): NetworkContactRepository {
-  if (STORAGE_PHASE === "local") return new LocalNetworkContactRepository();
+  if (getStoragePhase() === "local") return new LocalNetworkContactRepository();
   return new SupabaseNetworkContactRepository();
 }

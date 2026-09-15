@@ -2,18 +2,19 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { isCloud } from "@/repositories/cloud/CloudData";
+import { useSession } from "@/lib/session/SessionContext";
 import { readCloud } from "@/repositories/cloud/CloudTransport";
 import { DevicePanel } from "./DevicePanel";
 
 export function CloudGate({children}:{children:ReactNode}) {
   const pathname=usePathname();
-  const [status,setStatus]=useState<"loading"|"ready"|"unpaired"|"error">(isCloud()?"loading":"ready");
+  const cloud=useSession().storagePhase === "supabase";
+  const [status,setStatus]=useState<"loading"|"ready"|"unpaired"|"error">(cloud?"loading":"ready");
   const [generation,setGeneration]=useState(0),[updates,setUpdates]=useState(false),[attempt,setAttempt]=useState(0);
   const [hasLoaded,setHasLoaded]=useState(false);
   const revision=useRef<number|null>(null);
   useEffect(()=>{
-    if(!isCloud()||pathname==="/devices")return;
+    if(!cloud||pathname==="/devices")return;
     let alive=true,running=false;
     async function check(){
       if(running||document.visibilityState==="hidden")return;running=true;
@@ -32,8 +33,8 @@ export function CloudGate({children}:{children:ReactNode}) {
     void check();const timer=window.setInterval(()=>void check(),20000);
     window.addEventListener("focus",check);document.addEventListener("visibilitychange",check);
     return()=>{alive=false;window.clearInterval(timer);window.removeEventListener("focus",check);document.removeEventListener("visibilitychange",check);window.removeEventListener("bench:unpaired",unpaired);};
-  },[pathname,attempt]);
-  if(!isCloud())return children;
+  },[pathname,attempt,cloud]);
+  if(!cloud)return children;
   if(pathname==="/devices")return children;
   if(status==="unpaired")return <DevicePanel connected={()=>{setStatus("loading");setAttempt(n=>n+1);}}/>;
   if(status==="loading")return <p className="p-6">Connecting to your Bench…</p>;

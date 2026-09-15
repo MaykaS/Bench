@@ -1,6 +1,6 @@
 # Bench cloud setup with device pairing
 
-Bench uses one personal workspace. No email or password is required. Paired browsers receive a private, HttpOnly device cookie; the database stores only its hash. Pairing links expire after 10 minutes and work once. Disconnecting a device revokes its access and unused links. Access expires after a year, or when browser data is cleared.
+Bench uses one personal workspace. Production deployments enable cloud mode at runtime; local development also enables it when the Supabase server credentials are configured. An explicitly requested cloud connection never silently falls back to local data. No email or password is required. Paired browsers receive a private, HttpOnly device cookie; the database stores only its hash. Pairing links expire after 10 minutes and work once. Disconnecting a device revokes its access and unused links. Access expires after a year, or when browser data is cleared.
 
 ## Initial setup
 

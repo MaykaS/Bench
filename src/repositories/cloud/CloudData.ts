@@ -6,4 +6,6 @@ export const OWNER_ID = "00000000-0000-0000-0000-000000000001";
 export interface CloudData { cases: CaseSessionData[]; pei: PeiStoryData[]; applications: ApplicationData[]; network: NetworkContactData[]; }
 export interface CloudSnapshot { revision: number; data: CloudData; }
 export const storageKeys = {cases:"bench:case_sessions",pei:"bench:pei_stories",applications:"bench:applications",network:"bench:network_contacts"} as const;
-export const isCloud = () => process.env.NEXT_PUBLIC_BENCH_STORAGE === "supabase";
+export const isCloud = () => typeof document !== "undefined"
+  ? document.documentElement.dataset.storage === "supabase"
+  : process.env.NEXT_PUBLIC_BENCH_STORAGE?.trim().toLowerCase() === "supabase";

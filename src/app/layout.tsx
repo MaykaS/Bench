@@ -7,6 +7,7 @@ import { getSession } from "@/lib/session/getSession";
 import { SessionProvider } from "@/lib/session/SessionContext";
 import { ACCENT_HEX } from "@/lib/theme";
 import "./globals.css";
+export const dynamic = "force-dynamic";
 
 const instrumentSans = Instrument_Sans({
   subsets: ["latin"],
@@ -39,7 +40,7 @@ export default async function RootLayout({
   const session = await getSession();
 
   return (
-    <html lang="en" className={instrumentSans.variable}>
+    <html lang="en" data-storage={session.storagePhase} className={instrumentSans.variable}>
       <body className="font-sans antialiased">
         <SessionProvider session={session}>
           <CloudGate><NavShell>{children}</NavShell></CloudGate>

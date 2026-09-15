@@ -4,8 +4,8 @@ export class CloudError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
 export async function supabaseRpc<T>(name: "bench_pair" | "bench_data", body: object): Promise<T> {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SECRET_KEY;
+  const url = process.env.SUPABASE_URL?.trim();
+  const key = process.env.SUPABASE_SECRET_KEY?.trim();
   if (!url || !key) throw new CloudError(503,"Cloud storage is not configured yet.");
   const response = await fetch(`${url.replace(/\/$/,"")}/rest/v1/rpc/${name}`, {
     method:"POST", headers:{apikey:key,"Content-Type":"application/json"},
