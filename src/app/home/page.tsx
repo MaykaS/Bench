@@ -1,10 +1,44 @@
-import { Placeholder } from "@/components/Placeholder";
-
+"use client";
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { getApplicationRepository, getNetworkContactRepository, getCaseSessionRepository, getPeiStoryRepository, getGoalRepository, getPeiProgressRepository } from '@/repositories/factory';
+import { useSession } from '@/lib/session/SessionContext';
+import { useToday } from '@/lib/useToday';
+import type { Goal, GoalData } from '@/domain/Goal';
+import type { PeiProgress } from '@/domain/PeiProgress';
+import type { PeiStory } from '@/domain/PeiStory';
+import type { CaseSession } from '@/domain/CaseSession';
+import { APPLICATION_STATUSES, type Application } from '@/domain/Application';
+import type { NetworkContact } from '@/domain/NetworkContact';
+import { GoalEditor } from '@/components/home/GoalEditor';
+import { DataTransferPanel } from '@/components/DataTransferPanel';
+import { validateGoals } from '@/services/PreparationValidation';
+import type { ImportPreview } from '@/services/ImportTypes';
+type Dashboard = {apps:Application[];contacts:NetworkContact[];cases:CaseSession[];stories:PeiStory[];goals:Goal[];progress:PeiProgress[]};
 export default function HomePage() {
-  return (
-    <Placeholder
-      name="Home"
-      description="What you owe today across contacts, applications, and prep — once those exist to report on."
-    />
-  );
+  const {userId}=useSession(),today=useToday();
+  const [data,setData]=useState<Dashboard|null>(null),[error,setError]=useState(''),[attempt,setAttempt]=useState(0),[draft,setDraft]=useState<GoalData|null>(null);
+  useEffect(()=>{let active=true;Promise.all([getApplicationRepository().list(userId),getNetworkContactRepository().list(userId),getCaseSessionRepository().list(userId),getPeiStoryRepository().list(userId),getGoalRepository().list(userId),getPeiProgressRepository().list(userId)]).then(([apps,contacts,cases,stories,goals,progress])=>{if(active){setData({apps,contacts,cases,stories,goals,progress});setError('');}}).catch(()=>{if(active)setError('Could not load your overview. Please try again.');});return()=>{active=false;};},[userId,attempt]);
+  async function refreshGoals() {const goals=await getGoalRepository().list(userId);setData(d=>d?{...d,goals}:d);}
+  async function parseGoals(file:File):Promise<ImportPreview<GoalData>> {try{const b=JSON.parse(await file.text());if(b.format!=='bench-goals'||b.version!==1)throw new Error('Choose a version 1 Bench goals backup.');validateGoals(b.records);return {format:'bench-goals',version:1,records:b.records,errors:[],warnings:[]};}catch(e){return {format:'bench-goals',version:1,records:[],errors:[{message:e instanceof Error?e.message:'Could not read goals.'}],warnings:[]};}}
+  if(error)return <div className="panel"><p role="alert">{error}</p><button className="btn mt-3" onClick={()=>{setError('');setAttempt(n=>n+1);}}>Try again</button></div>;
+  if(!data)return <p className="text-secondary">Loading your overview…</p>;
+  const solved=data.cases.filter(c=>c.myRole==='casee');
+  const progress=data.stories.map(s=>data.progress.find(p=>p.id===s.id));
+  const mastered=progress.filter(p=>(p?.level??1)>=5).length, practices=progress.reduce((n,p)=>n+(p?.practices.length??0),0);
+  const end=new Date(`${today}T12:00:00`);end.setDate(end.getDate()+7);const cutoff=`${end.getFullYear()}-${String(end.getMonth()+1).padStart(2,'0')}-${String(end.getDate()).padStart(2,'0')}`;
+  const tasks=[...data.apps.filter(a=>a.nextActionOn).map(a=>({id:`a-${a.id}`,title:a.nextActionNote||'Next step',name:a.company,date:a.nextActionOn!,href:`/applications/${a.id}`,type:'Application'})),...data.contacts.filter(c=>c.nextFollowUpOn).map(c=>({id:`c-${c.id}`,title:c.nextFollowUpNote||'Follow up',name:c.name,date:c.nextFollowUpOn!,href:`/network/${c.id}`,type:'Network'}))].filter(t=>t.date<=cutoff).sort((a,b)=>a.date.localeCompare(b.date)||a.name.localeCompare(b.name));
+  return <div className="min-w-0 space-y-7 pb-10">
+    <header><p className="mb-1 text-xs font-medium uppercase tracking-[0.16em] text-accent">Your preparation, in view</p><h1 className="text-3xl font-semibold tracking-tight">Home</h1><p className="mt-2 text-sm text-secondary">Small steps toward your next opportunity.</p></header>
+    <section className="space-y-3" aria-labelledby="goals-heading"><div className="relative flex flex-wrap items-center justify-between gap-2"><h2 id="goals-heading" className="text-lg font-semibold">Your goals</h2><div className="flex items-center gap-2"><DataTransferPanel label="goals" format="bench-goals" accept=".json" exportRecords={()=>getGoalRepository().list(userId)} parseFile={parseGoals} replaceAll={rows=>getGoalRepository().replaceAll(userId,rows)} onImported={()=>setAttempt(n=>n+1)}/><button className="btn" disabled={!!draft} onClick={()=>setDraft({id:crypto.randomUUID(),userId,title:'',kind:'custom',target:10,current:0,storyIds:[],deadline:null})}>Add goal</button></div></div>
+    {draft&&<GoalEditor key={draft.id} initial={draft} stories={data.stories} onCancel={()=>setDraft(null)} onSave={async g=>{await getGoalRepository().save(userId,g);setDraft(null);await refreshGoals();}} onDelete={data.goals.some(g=>g.id===draft.id)?async()=>{await getGoalRepository().remove(userId,draft.id);setDraft(null);await refreshGoals();}:undefined}/>}
+    <div className="grid gap-3 lg:grid-cols-2">{data.goals.map(goal=>{const p=goal.progress(data.cases,data.progress);return <article key={goal.id} className="panel"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-xs font-medium uppercase tracking-wide text-accent">{goal.kind==='custom'?'Personal goal':goal.kind==='pei'?'PEI practice':`${goal.kind} cases`}</p><h3 className="mt-1 break-words font-semibold">{goal.title}</h3></div><button disabled={!!draft} className="min-h-tap shrink-0 text-sm text-accent" aria-label={`Edit goal: ${goal.title}`} onClick={()=>setDraft({...goal})}>Edit</button></div><p className="mt-4"><span className="text-3xl font-semibold tracking-tight">{p.current}</span><span className="text-secondary"> / {p.total} {goal.kind==='pei'?`stories at level ${goal.target}`:goal.kind==='custom'?'completed':'solved'}</span></p><div role="progressbar" aria-label={goal.title} aria-valuenow={Math.min(p.current,p.total)} aria-valuemin={0} aria-valuemax={p.total} className="mt-3 h-1.5 overflow-hidden rounded-full bg-blue-50"><div className="h-full rounded-full bg-accent" style={{width:`${p.percent}%`}}/></div><div className="mt-3 flex flex-wrap justify-between gap-2 text-xs text-secondary"><span>{p.achieved?'Goal achieved':goal.deadline&&goal.deadline<today?'Past your target date':'In progress'}{goal.deadline?` · Target ${goal.deadline}`:''}</span>{goal.kind!=='custom'&&<Link className="flex min-h-tap items-center text-accent" href={goal.kind==='pei'?'/prep/pei':`/prep/casing/${goal.kind}`}>Open {goal.kind==='pei'?'PEI':'Casing'} →</Link>}</div></article>;})}</div>{!data.goals.length&&<p className="panel text-sm text-secondary">No goals yet. Add a goal to start tracking what matters to you.</p>}</section>
+    <section aria-label="Summary statistics" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="panel"><Link className="flex min-h-tap items-center font-semibold text-accent" href="/applications">Applications →</Link><p className="mt-1 text-3xl font-semibold">{data.apps.length}</p><div className="mt-3 flex flex-wrap gap-1.5">{APPLICATION_STATUSES.map(s=><span key={s} className={`rounded-full px-2 py-1 text-xs ${s==='rejected'?'bg-red-50 text-red-700':s==='offer'?'bg-green-50 text-green-800':'bg-page text-secondary'}`}>{s.replace('_',' ')} {data.apps.filter(a=>a.status===s).length}</span>)}</div></div>
+      <div className="panel"><Link className="flex min-h-tap items-center font-semibold text-accent" href="/network">Network →</Link><p className="mt-1 text-3xl font-semibold">{data.contacts.length}<span className="ml-2 text-sm font-normal text-secondary">contacts</span></p><p className="mt-3 text-sm text-secondary">{data.contacts.filter(c=>c.nextFollowUpOn&&c.nextFollowUpOn<=today).length} follow-ups due or overdue</p></div>
+      <div className="panel"><Link className="flex min-h-tap items-center font-semibold text-accent" href="/prep/casing/consulting">Casing →</Link>{(['consulting','tech'] as const).map(track=>{const rows=solved.filter(c=>c.track===track),scored=rows.filter(c=>c.overall!==null);return <div key={track} className="mt-2 flex flex-wrap items-center justify-between gap-2 text-sm"><span className="capitalize text-secondary">{track}</span><span>{rows.length} solved · {scored.length?(scored.reduce((n,c)=>n+c.overall!,0)/scored.length).toFixed(1):'—'} avg</span></div>;})}</div>
+      <div className="panel"><Link className="flex min-h-tap items-center font-semibold text-accent" href="/prep/pei">PEI →</Link><p className="mt-1 text-3xl font-semibold">{mastered}<span className="ml-2 text-sm font-normal text-secondary">/ {data.stories.length} at level 5</span></p><p className="mt-3 text-sm text-secondary">{practices} practice sessions logged</p></div>
+    </section>
+    <section className="space-y-3"><h2 className="text-lg font-semibold">Coming up</h2><p className="text-sm text-secondary">Open tasks through {cutoff}. Complete or reschedule them in their records.</p>{!tasks.length?<p className="panel text-sm text-secondary">Nothing due in the next seven days.</p>:<div className="overflow-hidden rounded-card border border-hairline bg-surface divide-y divide-hairline">{tasks.map(t=><Link key={t.id} href={t.href} className="grid min-h-tap gap-2 p-4 sm:grid-cols-[150px_minmax(0,1fr)_auto] sm:items-center"><span className={`text-sm ${t.date<=today?'text-flag-text':'text-secondary'}`}>{t.date<today?'Overdue':t.date===today?'Due today':t.date}<span className="block text-xs">{t.date<=today?t.date:''}</span></span><div className="min-w-0"><p className="break-words font-medium">{t.title}</p><p className="text-sm text-secondary">{t.name}</p></div><span className="text-xs text-accent">{t.type} →</span></Link>)}</div>}</section>
+  </div>;
 }

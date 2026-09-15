@@ -1,3 +1,4 @@
+import { validatePreparation } from "./PreparationValidation";
 import { JsonBackupService } from "./JsonBackupService";
 import { CaseImportService } from "./CaseImportService";
 import { PeiImportService } from "./PeiImportService";
@@ -7,13 +8,15 @@ export async function validateCloudData(value: unknown): Promise<CloudData> {
   if (!value || typeof value !== "object") throw new Error("Expected four datasets.");
   const data = value as CloudData;
   for (const key of Object.keys(storageKeys) as (keyof CloudData)[]) {
+    if (key === "preparation" && data[key] === undefined) continue;
     if (!Array.isArray(data[key]) || data[key].length > 10000) throw new Error(`Invalid ${key} dataset.`);
     const ids = new Set<string>();
-    for (const row of data[key]) {
+    for (const row of data[key]!) {
       if (!row || typeof row !== "object" || typeof row.id !== "string" || !row.id || ids.has(row.id)) throw new Error(`Duplicate or missing ${key} ID.`);
       ids.add(row.id);
     }
   }
+  if(data.preparation) { validatePreparation(data.preparation); data.preparation = data.preparation.map(row=>({...row,userId:OWNER_ID,goals:row.goals.map(g=>({...g,userId:OWNER_ID})),progress:row.progress.map(p=>({...p,userId:OWNER_ID}))})); }
   const file = (format: string, records: unknown[]) => new File([JSON.stringify({format,version:1,records})],"backup.json",{type:"application/json"});
   const results = await Promise.all([
     JsonBackupService.parse(file("bench-applications",data.applications),"bench-applications",OWNER_ID),

@@ -40,3 +40,11 @@ export function getNetworkContactRepository(): NetworkContactRepository {
   if (getStoragePhase() === "local") return new LocalNetworkContactRepository();
   return new SupabaseNetworkContactRepository();
 }
+
+import type { GoalRepository, PeiProgressRepository } from "./PreparationRepository";
+import { LocalGoalRepository } from "./LocalGoalRepository";
+import { SupabaseGoalRepository } from "./cloud/SupabaseGoalRepository";
+export function getGoalRepository(): GoalRepository { return isCloud() ? new SupabaseGoalRepository() : new LocalGoalRepository(); }
+import { LocalPeiProgressRepository } from "./LocalPeiProgressRepository";
+import { SupabasePeiProgressRepository } from "./cloud/SupabasePeiProgressRepository";
+export function getPeiProgressRepository(): PeiProgressRepository { return isCloud() ? new SupabasePeiProgressRepository() : new LocalPeiProgressRepository(); }

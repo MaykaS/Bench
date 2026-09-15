@@ -21,6 +21,50 @@ const contact = { id: 'contact-current', userId: OWNER_ID, name: 'Example Contac
 const app = { id: 'application-1', userId: OWNER_ID, company: 'Example', role: 'Engineer', appliedOn: '2026-09-15', location: null, link: null, referred: false, contactIds: ['contact-old', 'contact-current'], notes: null, resumeVersion: null, status: 'applied', nextActionOn: null, nextActionNote: null, timeline: [], completedSteps: [], createdAt: date, updatedAt: date };
 const fixture = () => structuredClone({ cases: [], pei: [], applications: [app], network: [contact] });
 
+const { Goal } = require('../src/domain/Goal.ts');
+const { LocalGoalRepository } = require('../src/repositories/LocalGoalRepository.ts');
+const { LocalPeiProgressRepository } = require('../src/repositories/LocalPeiProgressRepository.ts');
+const { PeiImportService } = require('../src/services/PeiImportService.ts');
+const { validateGoals, validateProgress } = require('../src/services/PreparationValidation.ts');
+const seedStories = require('../seed/pei-stories.json');
+const prepStorage = () => new MemoryRecordStorage({'bench:pei_stories':seedStories});
+
+test('goal defaults persist once and count only solved cases by track', async()=>{
+ const store=prepStorage(), repo=new LocalGoalRepository(store); const goals=await repo.list(OWNER_ID);
+ assert.equal(goals.length,2); assert.equal(goals[0].target,15);
+ assert.equal(goals[0].progress([{track:'consulting',myRole:'casee'},{track:'consulting',myRole:'caser'},{track:'tech',myRole:'casee'}],[]).current,1);
+ for(const g of goals)await repo.remove(OWNER_ID,g.id);
+ assert.deepEqual(await new LocalGoalRepository(store).list(OWNER_ID),[]);
+ const custom=new Goal({id:'custom',userId:OWNER_ID,title:'Custom',kind:'custom',target:2,current:3,storyIds:[],deadline:'2020-01-01'});
+ assert.equal(custom.progress([],[]).achieved,true);assert.equal(custom.progress([],[]).percent,100);
+ await repo.save(OWNER_ID,custom);assert.equal((await repo.list(OWNER_ID))[0].current,3);
+ assert.throws(()=>validateGoals([{...custom,target:0}]));assert.throws(()=>validateGoals([{...custom,deadline:'2026-02-30'}]));
+});
+
+test('practice date and creation time determine level; edits and baseline persist', async()=>{
+ const store=prepStorage(),repo=new LocalPeiProgressRepository(store);const initial=(await repo.list(OWNER_ID))[0];assert.equal(initial.level,1);
+ const entry=(id,on,level,createdAt)=>({id,occurredOn:on,level,createdAt,notes:'Keep\n\nparagraphs'});
+ const row={...initial,practices:[entry('a','2026-09-14',4,'2026-09-15T10:00:00Z'),entry('b','2026-09-15',2,'2026-09-15T09:00:00Z'),entry('c','2026-09-15',5,'2026-09-15T11:00:00Z')]};
+ await repo.save(OWNER_ID,row);assert.equal((await new LocalPeiProgressRepository(store).list(OWNER_ID))[0].level,5);
+ assert.equal(new Goal({id:'pei',userId:OWNER_ID,title:'PEI',kind:'pei',target:5,current:0,storyIds:[row.id],deadline:null}).progress([], [row]).current,1);
+ await repo.save(OWNER_ID,{...row,practices:row.practices.filter(p=>p.id!=='c')});assert.equal((await repo.list(OWNER_ID))[0].level,2);
+ await repo.save(OWNER_ID,{...row,baseline:3,practices:[]});assert.equal((await repo.list(OWNER_ID))[0].level,3);
+ assert.throws(()=>validateProgress([{...row,baseline:6}]));
+});
+
+test('PEI backup round trips practice, old backups preserve history, failed saves roll back', async()=>{
+ const store=prepStorage(),repo=new LocalPeiProgressRepository(store);const row=(await repo.list(OWNER_ID))[0];
+ row.practices=[{id:'practice',occurredOn:'2026-09-15',level:4,notes:'Original\n\nnotes',createdAt:date}];await repo.save(OWNER_ID,row);
+ const records=seedStories.map(s=>({...s,...(s.id===row.id?{practiceProgress:row}:{})}));
+ const file=new File([JSON.stringify({format:'bench-pei',version:1,records})],'pei.json');const parsed=await new PeiImportService().parseFile(file);
+ assert.deepEqual(parsed.errors,[]);assert.equal(parsed.records.find(s=>s.id===row.id).practiceProgress.practices[0].notes,row.practices[0].notes);
+ await repo.replaceStories(OWNER_ID,seedStories);assert.equal((await repo.list(OWNER_ID))[0].level,4);
+ const before=store.getItem('bench:preparation'), original=store.setItem.bind(store);
+ store.setItem=(key,value)=>{if(key==='bench:pei_stories')throw new Error('Quota');original(key,value);};
+ await assert.rejects(()=>repo.replaceStories(OWNER_ID,seedStories,[{...row,baseline:5,practices:[]}]));assert.equal(store.getItem('bench:preparation'),before);
+ store.setItem=()=>{throw new Error('Quota');};await assert.rejects(()=>repo.save(OWNER_ID,{...row,baseline:5}));assert.equal(store.getItem('bench:preparation'),before);
+});
+
 test('migration repairs only a unique saved application reference and preserves original backups', async () => {
   const input = fixture(), before = structuredClone(input);
   const result = await prepareCloudMigration(input);

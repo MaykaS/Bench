@@ -8,7 +8,6 @@ export const bottomBarItems: Destination[] = [
   { label: "Network", href: "/network" },
   { label: "Prep", href: "/prep" },
   { label: "Applications", href: "/applications" },
-  { label: "Add", href: "/add" },
 ];
 
 export const sidebarItems: Destination[] = [

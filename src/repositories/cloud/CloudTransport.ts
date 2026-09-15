@@ -19,7 +19,7 @@ export const saveCloud = (snapshot:CloudSnapshot) => cloudRequest<CloudSnapshot>
 
 export async function withCloud<T>(write: boolean, operation: (storage: MemoryRecordStorage)=>Promise<T>): Promise<T> {
   const snapshot=await readCloud();
-  const storage=new MemoryRecordStorage(Object.fromEntries(Object.entries(storageKeys).map(([key,storageKey])=>[storageKey,snapshot.data[key as keyof CloudData]])));
+  const storage=new MemoryRecordStorage(Object.fromEntries(Object.entries(storageKeys).map(([key,storageKey])=>[storageKey,snapshot.data[key as keyof CloudData] ?? []])));
   const result=await operation(storage);
   if(write) {
     const data=Object.fromEntries(Object.entries(storageKeys).map(([key,storageKey])=>[key,JSON.parse(storage.getItem(storageKey)!)])) as unknown as CloudData;

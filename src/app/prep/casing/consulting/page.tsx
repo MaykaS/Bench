@@ -46,7 +46,7 @@ export default function CasingConsultingPage() {
         <div className="rounded-card bg-flag-bg p-3 text-flag-text"><p className="text-sm">Weakest</p><p className="mt-1 break-words text-lg font-semibold leading-tight">{summary?.weakestDimension?.label ?? "—"}</p></div>
       </div>
       <div className="relative flex gap-2.5 py-1">
-        <Link href="/prep/casing/consulting/new" className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-card bg-accent text-base font-medium text-surface"><span aria-hidden="true" className="text-xl">+</span> Log a case</Link>
+        <Link href="/prep/casing/consulting/new" className="flex min-h-tap flex-1 md:flex-none md:px-5 items-center justify-center gap-2 rounded-card bg-accent text-sm font-medium text-surface"><span aria-hidden="true" className="text-xl">+</span> Log a case</Link>
         <DataTransferPanel label="cases" format="bench-cases" exportRecords={() => getCaseSessionRepository().list(userId)} accept=".xlsx,.json" parseFile={(file) => importService.parseFile(file)} replaceAll={(records) => getCaseSessionRepository().replaceAll(userId, records)} onImported={() => { setSessions(null); setAttempt(n => n + 1); }} />
       </div>
 
