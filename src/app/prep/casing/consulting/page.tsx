@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import type { CaseSession } from "@/domain/CaseSession";
 import { ConsultingRubric } from "@/domain/rubrics/ConsultingRubric";
 import { CaseSessionCard } from "@/components/casing/CaseSessionCard";
-import { CaseSessionTable } from "@/components/casing/CaseSessionTable";
 import { SubTabs } from "@/components/nav/SubTabs";
 import { casingTabs, prepTabs } from "@/components/nav/destinations";
 import { useSession } from "@/lib/session/SessionContext";
@@ -59,12 +58,11 @@ export default function CasingConsultingPage() {
         <p className="text-secondary">No sessions yet. Log your first case.</p>
       ) : (
         <>
-          <div className="flex flex-col gap-3 md:hidden">
+          <div className="flex min-w-0 flex-col gap-4">
             {sessions.map((session) => (
               <CaseSessionCard key={session.id} session={session} />
             ))}
           </div>
-          <CaseSessionTable sessions={sessions} />
         </>
       )}
     </div>
