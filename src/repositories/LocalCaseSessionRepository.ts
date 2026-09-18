@@ -1,5 +1,6 @@
 import { browserStorage, type RecordStorage } from "./RecordStorage";
-import { CaseSession, type CaseSessionData } from "@/domain/CaseSession";
+import { CaseSession, type CaseSessionData, type CaseTrack } from "@/domain/CaseSession";
+import { caseTrackConflicts, validateCaseRecords } from "@/services/CaseValidation";
 import type {
   CaseSessionRepository,
   NewCaseSessionInput,
@@ -108,5 +109,12 @@ export class LocalCaseSessionRepository implements CaseSessionRepository {
   async replaceAll(userId: string, records: CaseSessionData[]): Promise<void> {
     const existing = readAll(this.storage).filter((row) => row.userId !== userId);
     this.writeAll([...existing, ...records.map((row) => ({ ...row, userId }))]);
+  }
+
+  async replaceTrack(userId: string, track: CaseTrack, records: CaseSessionData[]): Promise<void> {
+    const rows = readAll(this.storage);
+    const errors = [...validateCaseRecords(records), ...caseTrackConflicts(records, rows.filter(row => row.userId === userId), track)];
+    if (errors.length) throw new Error(errors.map(error => error.message).join(" "));
+    this.writeAll([...rows.filter(row => row.userId !== userId || row.track !== track), ...records.map(row => ({ ...row, userId }))]);
   }
 }

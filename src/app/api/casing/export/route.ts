@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { CaseSession, type CaseSessionData } from "@/domain/CaseSession";
+import { CaseSession, type CaseSessionData, type CaseTrack } from "@/domain/CaseSession";
 import { CaseExportService } from "@/services/CaseExportService";
 
 // exceljs needs the Node fs module, not the edge runtime.
@@ -11,17 +11,19 @@ export const runtime = "nodejs";
 // directly instead and drops the request body entirely.
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as { sessions?: CaseSessionData[] };
+    const body = (await request.json()) as { sessions?: CaseSessionData[]; track?: CaseTrack };
+    const track = body.track ?? "consulting";
+    if (track !== "tech" && track !== "consulting") return NextResponse.json({ error: "Invalid track." }, { status: 400 });
     const rows = Array.isArray(body.sessions) ? body.sessions : [];
     const sessions = rows.map((row) => new CaseSession(row));
 
-    const buffer = await new CaseExportService().buildWorkbookBuffer(sessions);
+    const buffer = await new CaseExportService().buildWorkbookBuffer(sessions, track);
 
     return new NextResponse(buffer, {
       headers: {
         "Content-Type":
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "Content-Disposition": 'attachment; filename="Case Tracker.xlsx"',
+        "Content-Disposition": `attachment; filename="Bench-${track}-cases.xlsx"`,
       },
     });
   } catch (error) {

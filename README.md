@@ -4,16 +4,16 @@ A personal, mobile-first recruiting tracker built with Next.js, TypeScript, Tail
 
 ## Available now
 
-- Log and edit consulting cases, scores, and notes.
+- Log and edit consulting and tech cases, scores, and notes.
 - Review sessions as responsive session cards, with performance summaries.
-- Export cases to the original Excel tracker format.
+- Import and export each case track as Excel, preserving the original tracker columns plus notes, role, track, record ID, and creation time.
 - Track applications with pipeline sorting, next-action reminders, contacts, resume versions, and process timelines.
 - Manage Network contacts, application links, follow-up history, search, and filters.
 - Add Bench to your home screen with its bench-and-sprout icon.
 
 By default, data stays in your browser's localStorage. Optional Supabase cloud mode uses one-time device pairing, with no email or password. Coffee chats and some prep sections currently show placeholders.
 
-Use the matching upload and download arrows on Applications, Network, Cases, and PEI to transfer versioned JSON backups between browsers or devices. Transfer Network too when moving applications with linked contacts. Case Excel and PEI Word files are still accepted by their upload controls. Imports show a validation preview. Network imports merge contacts and links with conflict review; other datasets replace only the selected dataset after confirmation. Configured cloud mode shares data across paired devices.
+Use the matching upload and download arrows on Applications, Network, and PEI to transfer versioned JSON backups between browsers or devices. Transfer Network too when moving applications with linked contacts. Casing uses Excel (.xlsx): each tab exports and replaces only its own track, leaving the other track untouched. Original tracker workbooks remain supported; missing roles are inferred with a warning. PEI Word files are also accepted by its upload control. Imports show a validation preview. Network imports merge contacts and links with conflict review; other datasets replace only the selected dataset after confirmation. Configured cloud mode shares data across paired devices.
 
 ## Run locally
 

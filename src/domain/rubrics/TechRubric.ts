@@ -1,11 +1,7 @@
 import { CaseRubric, type CaseRubricDimension } from "./CaseRubric";
+import { ConsultingRubric } from "./ConsultingRubric";
 
 export class TechRubric extends CaseRubric {
   readonly track = "tech" as const;
-  readonly dimensions: CaseRubricDimension[] = [];
-
-  constructor() {
-    super();
-    throw new Error("TechRubric is not defined yet.");
-  }
+  readonly dimensions: CaseRubricDimension[] = new ConsultingRubric().dimensions.map(dimension => ({ ...dimension }));
 }

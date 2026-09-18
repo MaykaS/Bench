@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:cloud": "node --test tests/cloud.test.cjs"
+    "test:cloud": "node --test tests/cloud.test.cjs",
+    "test:cases": "node --test tests/cases.test.cjs"
   },
   "dependencies": {
     "exceljs": "^4.4.0",

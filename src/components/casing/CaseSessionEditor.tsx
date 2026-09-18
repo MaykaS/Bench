@@ -1,0 +1,31 @@
+"use client";
+import { DeleteRecord } from "@/components/DeleteRecord";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import type { CaseSession, CaseTrack } from "@/domain/CaseSession";
+import { CaseSessionForm } from "@/components/casing/CaseSessionForm";
+import { getKnownPartnerNames } from "@/lib/casing/knownNames";
+import { useSession } from "@/lib/session/SessionContext";
+import { getCaseSessionRepository } from "@/repositories/factory";
+export function CaseSessionEditor({ id, track = "consulting" }: { id?: string; track?: CaseTrack }) {
+ const router=useRouter();
+ const { userId } = useSession();
+ const [data, setData] = useState<{ initial?: CaseSession; names: string[] } | null>(null);
+ const [error, setError] = useState<string | null>(null);
+ const [attempt, setAttempt] = useState(0);
+ useEffect(() => {
+   let active = true;
+   const repo = getCaseSessionRepository();
+   Promise.all([repo.list(userId), id ? repo.get(id, userId) : Promise.resolve(undefined)])
+     .then(([sessions, initial]) => {
+       if (!active) return;
+       if (id && (!initial || initial.track !== track)) { setError("This case could not be found."); return; }
+       setData({initial: initial ?? undefined, names: getKnownPartnerNames(sessions)});
+     }).catch(error => { console.error("Case load failed:", error); if (active) setError("Could not load your cases. Try again."); });
+   return () => { active = false; };
+ }, [id, userId, attempt, track]);
+ if (error) return <div className="space-y-3"><p role="alert">{error}</p><button className="min-h-tap rounded-card border border-hairline px-4" onClick={() => {setError(null); setAttempt(n => n + 1);}}>Retry</button><Link className="flex min-h-tap items-center text-accent" href={`/prep/casing/${track}`}>Back to cases</Link></div>;
+ if (!data) return <p className="text-secondary">Loading case…</p>;
+ return <CaseSessionForm track={track} initial={data.initial} knownNames={data.names} actions={id&&<DeleteRecord label={data.initial?.caseName??"case"} description="Delete this case session? Your solved-case goals will recalculate." onDelete={async()=>{await getCaseSessionRepository().delete(id,userId);router.push(`/prep/casing/${track}`);}}/>}/>;
+}

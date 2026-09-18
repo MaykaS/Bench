@@ -29,4 +29,5 @@ export interface CaseSessionRepository {
   ): Promise<CaseSession>;
   delete(id: string, userId: string): Promise<void>;
   replaceAll(userId: string, records: CaseSessionData[]): Promise<void>;
+  replaceTrack(userId: string, track: CaseTrack, records: CaseSessionData[]): Promise<void>;
 }

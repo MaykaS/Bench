@@ -91,7 +91,7 @@ are defined by a `CaseRubric` subclass, not by columns:
 
 - `ConsultingRubric` — structure, math, coaching, business acumen, conclusion,
   creativity. Fixed; it maps to the xlsx export contract.
-- `TechRubric` — not defined yet. Leave a stub that throws on use.
+- `TechRubric` — uses the same six dimensions as Consulting (user-selected); sessions stay track-specific.
 
 Adding a track later must be one new class, not a migration.
 

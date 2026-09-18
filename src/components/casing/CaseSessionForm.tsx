@@ -4,15 +4,15 @@ import { useLayoutEffect, useRef, useState, type ReactNode, type FormEvent } fro
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { CaseSession } from "@/domain/CaseSession";
-import type { CaseRole } from "@/domain/CaseSession";
-import { ConsultingRubric } from "@/domain/rubrics/ConsultingRubric";
+import type { CaseRole, CaseTrack } from "@/domain/CaseSession";
+import { getCaseRubric } from "@/domain/rubrics";
 import { NameAutocompleteInput } from "@/components/casing/NameAutocompleteInput";
 import { ScoreTapInput } from "@/components/casing/ScoreTapInput";
 import { todayIsoDate } from "@/lib/date";
 import { useSession } from "@/lib/session/SessionContext";
 import { getCaseSessionRepository } from "@/repositories/factory";
 
-const rubric = new ConsultingRubric();
+
 
 const ROLES: { value: CaseRole; label: string }[] = [
   { value: "casee", label: "I was cased" },
@@ -20,7 +20,8 @@ const ROLES: { value: CaseRole; label: string }[] = [
   { value: "observer", label: "I observed" },
 ];
 
-export function CaseSessionForm({ initial, knownNames, actions }: { initial?: CaseSession; knownNames: string[]; actions?: ReactNode }) {
+export function CaseSessionForm({ initial, knownNames, actions, track = "consulting" }: { track?: CaseTrack; initial?: CaseSession; knownNames: string[]; actions?: ReactNode }) {
+  const rubric = getCaseRubric(track);
   const router = useRouter();
   const { userId } = useSession();
 
@@ -62,7 +63,7 @@ export function CaseSessionForm({ initial, knownNames, actions }: { initial?: Ca
         caseName: caseName.trim(),
         occurredOn,
         myRole,
-        track: "consulting" as const,
+        track,
         caserName: caserName.trim() || null,
         caseeName: caseeName.trim() || null,
         observerName: observerName.trim() || null,
@@ -78,7 +79,7 @@ export function CaseSessionForm({ initial, knownNames, actions }: { initial?: Ca
       const repo = getCaseSessionRepository();
       if (initial) await repo.update(initial.id, userId, input);
       else await repo.create(userId, input);
-      router.push("/prep/casing/consulting");
+      router.push(`/prep/casing/${track}`);
     } catch (error) {
       console.error("Case save failed:", error);
       setError("Could not save your case. Your changes are still here. Try again.");
@@ -235,7 +236,7 @@ export function CaseSessionForm({ initial, knownNames, actions }: { initial?: Ca
       >
         {saving ? "Saving…" : initial ? "Save changes" : "Save case"}
       </button>
-      <Link href="/prep/casing/consulting" className="btn md:self-start">Cancel</Link>
+      <Link href={`/prep/casing/${track}`} className="btn md:self-start">Cancel</Link>
     </form>
   );
 }
