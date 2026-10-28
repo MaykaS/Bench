@@ -3,6 +3,9 @@ import { LocalNetworkContactRepository } from "../LocalNetworkContactRepository"
 import { withCloud } from "./CloudTransport";
 
 export class SupabaseNetworkContactRepository implements NetworkContactRepository {
+  deleteMany(...args: Parameters<NetworkContactRepository["deleteMany"]>): ReturnType<NetworkContactRepository["deleteMany"]> {
+    return withCloud(true, storage => new LocalNetworkContactRepository(storage).deleteMany(...args));
+  }
   delete(...args: Parameters<NetworkContactRepository["delete"]>): ReturnType<NetworkContactRepository["delete"]> { return withCloud(true,storage=>new LocalNetworkContactRepository(storage).delete(...args)); }
   list(...args: Parameters<NetworkContactRepository["list"]>): ReturnType<NetworkContactRepository["list"]> {
     return withCloud(false, storage => new LocalNetworkContactRepository(storage).list(...args));

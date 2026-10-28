@@ -14,6 +14,11 @@ function read<T>(key: string, storage?: RecordStorage): T[] {
 export class LocalNetworkContactRepository implements NetworkContactRepository {
   constructor(private readonly storage: RecordStorage | undefined = browserStorage()) {}
   private commit(changes: Record<string, unknown>) { commitLocalTransaction(changes, this.storage); }
+  async deleteMany(userId: string, ids: string[]) {
+    const contacts=read<NetworkContactData>(KEY,this.storage), apps=read<ApplicationData>(APP_KEY,this.storage), selected=new Set(ids);
+    if(ids.some(id=>!contacts.some(c=>c.id===id&&c.userId===userId)))throw new Error("Contacts changed. Reload before deleting.");
+    this.commit({[KEY]:contacts.filter(c=>c.userId!==userId||!selected.has(c.id)),[APP_KEY]:apps.map(a=>a.userId===userId&&a.contactIds.some(id=>selected.has(id))?{...a,contactIds:a.contactIds.filter(id=>!selected.has(id)),updatedAt:new Date().toISOString()}:a)});
+  }
   async delete(id: string, userId: string) {
     const contacts=read<NetworkContactData>(KEY,this.storage), apps=read<ApplicationData>(APP_KEY,this.storage);
     if(!contacts.some(c=>c.id===id&&c.userId===userId)) throw new Error('Contact not found.');

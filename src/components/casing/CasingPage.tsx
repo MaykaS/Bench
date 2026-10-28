@@ -1,4 +1,5 @@
 "use client";
+import { BulkSelection } from "@/components/BulkSelection";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -72,13 +73,13 @@ export function CasingPage({ track }: { track: CaseTrack }) {
       ) : sessions.length === 0 ? (
         <p className="text-secondary">No {label.toLowerCase()} sessions yet. Log your first case.</p>
       ) : (
-        <>
+        <BulkSelection items={sessions.map(s=>({id:s.id,label:s.caseName}))} noun="case sessions" description="These sessions and their notes will be permanently removed. Case goals and statistics will recalculate." onDelete={async ids=>{await getCaseSessionRepository().deleteMany(userId,ids);setSessions(rows=>rows?.filter(row=>!ids.includes(row.id))??null);}}>{checkbox=>(
           <div className="flex min-w-0 flex-col gap-4">
             {sessions.map((session) => (
-              <CaseSessionCard key={session.id} session={session} onDelete={async()=>{await getCaseSessionRepository().delete(session.id,userId);setSessions(rows=>rows?.filter(s=>s.id!==session.id)??null);}}/>
+              <div key={session.id} className="relative"><div className="absolute left-1 top-1 z-10">{checkbox(session.id)}</div><div className="pl-11"><CaseSessionCard session={session} onDelete={async()=>{await getCaseSessionRepository().delete(session.id,userId);setSessions(rows=>rows?.filter(s=>s.id!==session.id)??null);}}/></div></div>
             ))}
           </div>
-        </>
+        )}</BulkSelection>
       )}
     </div>
   );

@@ -3,6 +3,9 @@ import { LocalApplicationRepository } from "../LocalApplicationRepository";
 import { withCloud } from "./CloudTransport";
 
 export class SupabaseApplicationRepository implements ApplicationRepository {
+  deleteMany(...args: Parameters<ApplicationRepository["deleteMany"]>): ReturnType<ApplicationRepository["deleteMany"]> {
+    return withCloud(true, storage => new LocalApplicationRepository(storage).deleteMany(...args));
+  }
   list(...args: Parameters<ApplicationRepository["list"]>): ReturnType<ApplicationRepository["list"]> {
     return withCloud(false, storage => new LocalApplicationRepository(storage).list(...args));
   }

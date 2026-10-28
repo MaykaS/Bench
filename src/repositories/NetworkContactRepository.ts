@@ -9,6 +9,7 @@ export interface ContactImportPlan {
   errors: string[]; warnings: string[];
 }
 export interface NetworkContactRepository {
+  deleteMany(userId: string, ids: string[]): Promise<void>;
   delete(id: string, userId: string): Promise<void>;
   list(userId: string): Promise<NetworkContact[]>;
   get(id: string, userId: string): Promise<NetworkContact | null>;

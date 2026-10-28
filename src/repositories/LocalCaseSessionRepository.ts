@@ -102,6 +102,12 @@ export class LocalCaseSessionRepository implements CaseSessionRepository {
     return new CaseSession(updated);
   }
 
+  async deleteMany(userId: string, ids: string[]): Promise<void> {
+    if(!this.storage)throw new Error("Storage unavailable.");
+    const rows=readAll(this.storage), selected=new Set(ids);
+    if(ids.some(id=>!rows.some(row=>row.id===id&&row.userId===userId)))throw new Error("Cases changed. Reload before deleting.");
+    this.writeAll(rows.filter(row=>row.userId!==userId||!selected.has(row.id)));
+  }
   async delete(id: string, userId: string): Promise<void> {
     this.writeAll(readAll(this.storage).filter((r) => !(r.id === id && r.userId === userId)));
   }

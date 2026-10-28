@@ -19,6 +19,7 @@ export interface NewCaseSessionInput {
 }
 
 export interface CaseSessionRepository {
+  deleteMany(userId: string, ids: string[]): Promise<void>;
   list(userId: string): Promise<CaseSession[]>;
   get(id: string, userId: string): Promise<CaseSession | null>;
   create(userId: string, input: NewCaseSessionInput): Promise<CaseSession>;

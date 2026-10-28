@@ -23,5 +23,11 @@ export class LocalApplicationRepository implements ApplicationRepository {
   async get(id: string, userId: string) { const row = read(this.storage).find(r => r.id === id && r.userId === userId); return row ? new Application(row) : null; }
   async create(userId: string, input: NewApplicationInput) { const now = new Date().toISOString(); const applied: ApplicationData = { ...input, id: crypto.randomUUID(), userId, status: input.status ?? "applied", timeline: input.timeline ?? [{ id: crypto.randomUUID(), label: input.status ?? "applied", date: input.appliedOn, note: null, createdAt: now }], createdAt: now, updatedAt: now }; this.write([...read(this.storage), applied]); return new Application(applied); }
   async update(id: string, userId: string, input: Partial<NewApplicationInput>) { const rows = read(this.storage); const index = rows.findIndex(r => r.id === id && r.userId === userId); if (index < 0) throw new Error("Application not found."); const updated = { ...rows[index], ...input, updatedAt: new Date().toISOString() }; rows[index] = updated; this.write(rows); return new Application(updated); }
+  async deleteMany(userId: string, ids: string[]) {
+    if(!this.storage)throw new Error("Storage unavailable.");
+    const rows=read(this.storage), selected=new Set(ids);
+    if(ids.some(id=>!rows.some(row=>row.id===id&&row.userId===userId)))throw new Error("Applications changed. Reload before deleting.");
+    this.write(rows.filter(row=>row.userId!==userId||!selected.has(row.id)));
+  }
   async delete(id: string, userId: string) { this.write(read(this.storage).filter(r => !(r.id === id && r.userId === userId))); }
 }

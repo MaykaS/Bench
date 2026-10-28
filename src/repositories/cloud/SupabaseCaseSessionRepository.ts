@@ -3,6 +3,9 @@ import { LocalCaseSessionRepository } from "../LocalCaseSessionRepository";
 import { withCloud } from "./CloudTransport";
 
 export class SupabaseCaseSessionRepository implements CaseSessionRepository {
+  deleteMany(...args: Parameters<CaseSessionRepository["deleteMany"]>): ReturnType<CaseSessionRepository["deleteMany"]> {
+    return withCloud(true, storage => new LocalCaseSessionRepository(storage).deleteMany(...args));
+  }
   replaceTrack(...args: Parameters<CaseSessionRepository["replaceTrack"]>): ReturnType<CaseSessionRepository["replaceTrack"]> {
     return withCloud(true, storage => new LocalCaseSessionRepository(storage).replaceTrack(...args));
   }

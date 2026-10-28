@@ -141,3 +141,27 @@ test('phone survives backup validation and deleting a contact removes only its r
  const repo=new LocalNetworkContactRepository(storage);await repo.delete(contact.id,OWNER_ID);
  assert.equal((await repo.list(OWNER_ID)).length,0);const apps=JSON.parse(storage.getItem(storageKeys.applications));assert.equal(apps.length,1);assert.equal(apps[0].company,app.company);assert.ok(!apps[0].contactIds.includes(contact.id));
 });
+
+test('bulk deletion is scoped, atomic, and removes contact links without deleting applications',async()=>{
+ const { LocalApplicationRepository }=require('../src/repositories/LocalApplicationRepository.ts');
+ const { LocalCaseSessionRepository }=require('../src/repositories/LocalCaseSessionRepository.ts');
+ const contacts=[{...contact,id:'c1'},{...contact,id:'c2'},{...contact,id:'keep'},{...contact,id:'foreign',userId:'other'}];
+ const applications=[{...app,id:'a1',contactIds:['c1','c2','keep']},{...app,id:'a2',contactIds:['c1']},{...app,id:'foreign',userId:'other',contactIds:['c1']}];
+ const storage=new MemoryRecordStorage({[storageKeys.network]:contacts,[storageKeys.applications]:applications,[storageKeys.cases]:[{id:'s1',userId:OWNER_ID},{id:'s2',userId:OWNER_ID},{id:'foreign',userId:'other'}]});
+ const network=new LocalNetworkContactRepository(storage);
+ await assert.rejects(()=>network.deleteMany(OWNER_ID,['c1','foreign']));assert.equal(JSON.parse(storage.getItem(storageKeys.network)).length,4);
+ const before=[storage.getItem(storageKeys.network),storage.getItem(storageKeys.applications)];const original=storage.setItem.bind(storage);let fail=true;
+ storage.setItem=(key,value)=>{if(key===storageKeys.applications&&fail){fail=false;throw Error('Quota');}original(key,value);};
+ await assert.rejects(()=>network.deleteMany(OWNER_ID,['c1','c2']));assert.deepEqual([storage.getItem(storageKeys.network),storage.getItem(storageKeys.applications)],before);
+ storage.setItem=original;await network.deleteMany(OWNER_ID,['c1','c2']);
+ const remaining=JSON.parse(storage.getItem(storageKeys.applications));assert.equal(remaining.length,3);assert.deepEqual(remaining[0].contactIds,['keep']);assert.deepEqual(remaining[2].contactIds,['c1']);
+ const apps=new LocalApplicationRepository(storage);await apps.deleteMany(OWNER_ID,['a1','a2']);assert.deepEqual(JSON.parse(storage.getItem(storageKeys.applications)).map(a=>a.id),['foreign']);assert.equal(JSON.parse(storage.getItem(storageKeys.network)).length,2);
+ const cases=new LocalCaseSessionRepository(storage);await assert.rejects(()=>cases.deleteMany(OWNER_ID,['s1','foreign']));await cases.deleteMany(OWNER_ID,['s1','s2']);assert.deepEqual(JSON.parse(storage.getItem(storageKeys.cases)).map(s=>s.id),['foreign']);
+});
+
+test('cloud bulk deletion sends one revision-checked write and rejects conflicts without partial deletion',async()=>{
+ const { SupabaseApplicationRepository }=require('../src/repositories/cloud/SupabaseApplicationRepository.ts');
+ const original=global.fetch;let snapshot={revision:1,data:{...fixture(),applications:[{...app,id:'a1'},{...app,id:'a2'},{...app,id:'keep'}]}},writes=0,conflict=true;
+ global.fetch=async(_url,options)=>{if(options?.method!=='PUT')return Response.json(snapshot);writes++;if(conflict)return Response.json({error:'Conflict'},{status:409});const next=JSON.parse(options.body);assert.equal(next.revision,snapshot.revision);snapshot={...next,revision:next.revision+1};return Response.json(snapshot);};
+ try{const repo=new SupabaseApplicationRepository();await assert.rejects(()=>repo.deleteMany(OWNER_ID,['a1','a2']),/Conflict/);assert.equal(snapshot.data.applications.length,3);assert.equal(writes,1);conflict=false;await repo.deleteMany(OWNER_ID,['a1','a2']);assert.equal(writes,2);assert.deepEqual(snapshot.data.applications.map(a=>a.id),['keep']);}finally{global.fetch=original;}
+});
